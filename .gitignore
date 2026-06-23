@@ -1,0 +1,21 @@
+# Local runtime data
+data/
+.env
+
+# Docker and generated logs
+*.log
+*.pid
+*.tar.gz
+*.zip
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Temporary files
+tmp/
+*.tmp
+*.bak
+*.swp

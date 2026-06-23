@@ -1,0 +1,47 @@
+services:
+  conan:
+    build:
+      context: .
+    image: conan-exiles-container:local
+    container_name: conan-exiles-container
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-America/New_York}
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      SERVER_NAME: ${SERVER_NAME:-Conan Exiles Server}
+      SERVER_PASSWORD: ${SERVER_PASSWORD:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      MAX_PLAYERS: ${MAX_PLAYERS:-40}
+      GAME_PORT: ${GAME_PORT:-7777}
+      PINGER_PORT: ${PINGER_PORT:-7778}
+      QUERY_PORT: ${QUERY_PORT:-27015}
+      RCON_ENABLED: ${RCON_ENABLED:-true}
+      RCON_PORT: ${RCON_PORT:-25575}
+      RCON_PASSWORD: ${RCON_PASSWORD:-}
+      UPDATE_SERVER_ON_START: ${UPDATE_SERVER_ON_START:-true}
+      VALIDATE_SERVER_FILES: ${VALIDATE_SERVER_FILES:-false}
+      AUTO_GAME_UPDATE: ${AUTO_GAME_UPDATE:-false}
+      AUTO_GAME_UPDATE_INTERVAL_MINUTES: ${AUTO_GAME_UPDATE_INTERVAL_MINUTES:-360}
+      UPDATE_MODS_ON_START: ${UPDATE_MODS_ON_START:-true}
+      AUTO_MOD_UPDATE: ${AUTO_MOD_UPDATE:-false}
+      WORKSHOP_MOD_IDS: ${WORKSHOP_MOD_IDS:-}
+      PRUNE_REMOVED_MODS: ${PRUNE_REMOVED_MODS:-true}
+      BACKUP_LOCATION: ${BACKUP_LOCATION:-/serverdata/backups}
+      BACKUP_ON_START: ${BACKUP_ON_START:-true}
+      BACKUP_ON_STOP: ${BACKUP_ON_STOP:-false}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      EXTRA_ARGS: ${EXTRA_ARGS:-}
+    ports:
+      - "${GAME_PORT:-7777}:${GAME_PORT:-7777}/udp"
+      - "${PINGER_PORT:-7778}:${PINGER_PORT:-7778}/udp"
+      - "${QUERY_PORT:-27015}:${QUERY_PORT:-27015}/udp"
+      - "${RCON_PORT:-25575}:${RCON_PORT:-25575}/tcp"
+      # Reserved for the future Phase 2 WebGUI. The MVP does not run a web service.
+      # - "8080:8080/tcp"
+    volumes:
+      - ./data/serverfiles:/serverdata/serverfiles
+      - ./data/steam:/serverdata/steam
+      - ./data/config:/serverdata/config
+      - ./data/logs:/serverdata/logs
+      - ./data/backups:/serverdata/backups
