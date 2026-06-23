@@ -2,11 +2,12 @@
 
 ## Current Blocker
 
-Docker Desktop on the current local host can start SteamCMD, but SteamCMD anonymous login fails before Conan Exiles Dedicated Server AppID `443030` can be downloaded.
+Docker Desktop on the current local host can start SteamCMD, but Linux SteamCMD anonymous login fails under Docker's default builtin seccomp profile before Conan Exiles Dedicated Server AppID `443030` can be downloaded through SteamCMD.
 
 Observed SteamCMD failure:
 
 ```text
+CreateBoundSocket: failed to create socket, error [no name available] (38)
 Connecting anonymously to Steam Public...
 FAILED (No Connection)
 ```
@@ -15,18 +16,62 @@ FAILED (No Connection)
 
 - The Codex host has public internet access.
 - The Codex host does not have LAN access by design.
+- Windows host SteamCMD works from `C:\Conan Exiles Server\DedicatedServerLauncher\steamcmd.exe`.
 - The project image can start SteamCMD with the seeded non-root Steam home.
-- The same anonymous-login failure occurs in the upstream `steamcmd/steamcmd:ubuntu-24` image.
-- The same anonymous-login failure occurs when the upstream image is run with Docker host networking.
+- The same anonymous-login failure occurs in the upstream `steamcmd/steamcmd:ubuntu-24` image under Docker's default security profile.
+- The same project and upstream Linux SteamCMD login/app-info checks pass with diagnostic `--security-opt seccomp=unconfined`.
 - HTTPS access from containers has worked for Docker image/package downloads, so this is not currently proven to be general Docker internet failure.
+- Docker Engine is `29.4.2`; Docker security options show `seccomp` with `Profile: builtin`.
 
 ## Meaning
 
-Current evidence points to a Docker Desktop, local network, firewall, proxy, VPN, DNS, or Steam connectivity problem. It is not yet evidence that the project app logic is wrong.
+Current evidence points to a Docker Engine/Desktop `29.4.2` seccomp compatibility problem with Linux SteamCMD in containers. It is not evidence that Steam is down, that Windows host networking is broken, or that the project app logic is wrong.
 
 Do not treat lack of LAN access as a SteamCMD blocker. This Codex host is intentionally public-internet-only.
 
 Do not claim a full fix or MVP success until AppID `443030` downloads successfully through the intended production path and the real server executable, paths, config files, launch behavior, Workshop handling, and modlist behavior are verified from actual downloaded files.
+
+## Docker Seccomp Findings
+
+Captured local Docker environment:
+
+- Docker Desktop: `4.72.0 (225998)`
+- Docker Engine: `29.4.2`
+- containerd: `v2.2.3`
+- runc: `1.3.5`
+- Docker context: `desktop-linux`
+- Kernel: `6.6.87.2-microsoft-standard-WSL2`
+- Security options: `seccomp`, profile `builtin`
+
+Diagnostics on June 23, 2026:
+
+- Windows host SteamCMD version/login/app-info: pass.
+- Upstream Linux SteamCMD with default Docker seccomp: fail/inconclusive with `CreateBoundSocket` and `FAILED (No Connection)`.
+- Upstream Linux SteamCMD with `seccomp=unconfined`: pass.
+- Project image Linux SteamCMD with default Docker seccomp: fail/inconclusive.
+- Project image Linux SteamCMD with `seccomp=unconfined`: pass.
+- Compose override with `security_opt: seccomp=unconfined`: config renders and app-info passes.
+
+Docker's Engine 29 release notes document a `29.4.2` seccomp hardening change that blocks `AF_ALG` sockets and `socketcall(2)`, and explicitly lists SteamCMD and Wine as impacted workloads. Docker's `29.4.3` notes document replacing the broad `socketcall` deny with targeted LSM controls.
+
+References:
+
+- https://docs.docker.com/engine/release-notes/29/#2942
+- https://docs.docker.com/engine/release-notes/29/#2943
+
+Preferred remediation:
+
+1. Upgrade Docker Engine/Desktop to a version containing the `29.4.3` seccomp compatibility fix when available for Docker Desktop.
+2. Use `DOWNLOAD_BACKEND=depotdownloader` for normal local testing until Docker is upgraded.
+3. Use `docker-compose.steamcmd-unconfined.diagnostic.yml` only as a diagnostic/emergency workaround.
+
+Diagnostic/emergency override:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.steamcmd-unconfined.diagnostic.yml up
+```
+
+This override is less secure than Docker's default isolation because it disables seccomp filtering for the Conan service. Do not make it the default.
 
 ## DepotDownloader Comparison
 
@@ -59,6 +104,8 @@ From the repo root on Windows:
 ```powershell
 docker compose build
 .\tests\steamcmd-connectivity.ps1
+.\tests\windows-steamcmd-comparison.ps1
+.\tests\steamcmd-security-diagnostics.ps1
 ```
 
 From a Bash-compatible shell:
@@ -66,6 +113,7 @@ From a Bash-compatible shell:
 ```bash
 docker compose build
 ./tests/steamcmd-connectivity.sh
+./tests/steamcmd-security-diagnostics.sh
 ```
 
 DepotDownloader comparison diagnostics:
@@ -82,6 +130,8 @@ Diagnostics write raw logs and a summary under:
 
 ```text
 ./test-results/steamcmd-connectivity/
+./test-results/windows-steamcmd-comparison/
+./test-results/steamcmd-security-diagnostics/
 ./test-results/depotdownloader-connectivity/
 ```
 
@@ -106,6 +156,9 @@ By default, SteamCMD login/update failures are reported as inconclusive checks b
 - Check Docker Desktop backend network rules.
 - Check VPN or proxy interference.
 - Check SteamCMD-specific protocol/login behavior.
+- Check Docker Engine/Desktop version.
+- Check `docker info` security options and seccomp profile.
+- Compare Docker default seccomp against diagnostic `seccomp=unconfined`.
 - Compare with explicit `DOWNLOAD_BACKEND=depotdownloader` only when diagnosing SteamCMD-specific failures.
 - Try public DNS override checks with Docker `--dns 1.1.1.1` and `--dns 8.8.8.8`.
 - Try Docker Desktop host networking if it is available/enabled.
@@ -115,6 +168,7 @@ By default, SteamCMD login/update failures are reported as inconclusive checks b
 
 - Do not switch to Wine as a workaround for this connectivity blocker.
 - Do not mark download, launch, update, mod, or MVP behavior as working without real AppID `443030` files.
+- Do not leave `seccomp=unconfined` enabled as a default production setting.
 - Do not make DepotDownloader the default without verified reason and explicit user approval.
 - Do not claim Workshop mod fallback support until real `.pak` layout, modlist order, and failure behavior are verified.
 - Do not print tokens, passwords, or secrets in diagnostic output.

@@ -1,0 +1,15 @@
+# Diagnostic / emergency workaround only.
+#
+# This disables Docker's seccomp filtering for the Conan service so Linux
+# SteamCMD can be tested when Docker's builtin seccomp profile blocks it.
+# It is less secure than the default Docker isolation and is not enabled by
+# default. Prefer updating Docker Engine/Desktop or using the verified
+# DepotDownloader backend when possible.
+#
+# Example:
+# docker compose -f docker-compose.yml -f docker-compose.steamcmd-unconfined.diagnostic.yml up
+
+services:
+  conan:
+    security_opt:
+      - seccomp=unconfined

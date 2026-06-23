@@ -41,6 +41,9 @@ docker compose down
 ## Current Local Status
 
 - Docker Desktop engine is available.
+- Docker Desktop version is `4.72.0 (225998)`.
+- Docker Engine version is `29.4.2`.
+- Docker security options include builtin seccomp.
 - GitHub CLI is not installed.
 - `docker compose config` passes.
 - Bash syntax checks pass for all scripts.
@@ -55,10 +58,14 @@ docker compose down
 - Empty mod list handling passes.
 - Backup creation passes.
 - Start without downloaded files fails loudly with: `Cannot start: no native Linux Conan server executable found under /serverdata/serverfiles.`
-- AppID `443030` download is blocked because SteamCMD anonymous login fails from Docker Desktop with `FAILED (No Connection)`.
-- The same Steam anonymous login failure occurs in the upstream `steamcmd/steamcmd:ubuntu-24` image, including with `--network host`.
-- Full first boot through the default SteamCMD backend is blocked until SteamCMD can connect to Steam Public from this host or another Docker host.
-- Full Workshop mod handling remains unverified.
+- Windows host SteamCMD works from `C:\Conan Exiles Server\DedicatedServerLauncher\steamcmd.exe`.
+- Linux SteamCMD under Docker default builtin seccomp fails with `CreateBoundSocket: failed to create socket, error [no name available] (38)` and `FAILED (No Connection)`.
+- Linux SteamCMD under Docker diagnostic `seccomp=unconfined` succeeds for anonymous login and AppID `443030` app-info checks.
+- `docker-compose.steamcmd-unconfined.diagnostic.yml` is available only as a diagnostic/emergency workaround and is less secure than default Docker isolation.
+- Full first boot through the default SteamCMD backend is blocked on Docker Engine `29.4.2` until Docker is upgraded or a safe seccomp profile is verified.
+- Normal local server-file testing should use `DOWNLOAD_BACKEND=depotdownloader` on this Docker version.
+- Single-mod Workshop download and project modlist generation were verified under diagnostic `seccomp=unconfined` using item `3720546346`.
+- Full live Workshop mod loading remains unverified.
 
 External metadata checked June 23, 2026:
 

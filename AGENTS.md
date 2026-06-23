@@ -15,6 +15,8 @@ Rules for Codex and future agents:
 - Do not attempt LAN, Rocky Linux, or Unraid connectivity tests from the local Codex host. This environment has public internet access only and no LAN access by design.
 - When SteamCMD connectivity fails, compare host public internet, generic container internet/DNS, the project image, and the upstream SteamCMD image before changing app logic.
 - Keep SteamCMD as the default server download backend unless verified evidence and user approval justify changing the default. Alternate downloaders must be selected explicitly, logged clearly, and never used as a silent fallback.
+- When Linux SteamCMD fails in Docker with `CreateBoundSocket` or `FAILED (No Connection)`, check Docker Engine version, security options, and seccomp behavior. Docker Engine `29.4.2` is a known bad candidate for SteamCMD because its builtin seccomp profile can block required socket behavior.
+- Treat `seccomp=unconfined` as diagnostic/emergency-only. Prefer upgrading Docker Engine/Desktop to a fixed version or using the verified DepotDownloader backend for normal testing.
 - Prefer small, testable changes.
 - Keep the image generic and portable. Do not hardcode host-specific paths.
 - Update `SESSION_HANDOFF.md` before stopping work.

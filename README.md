@@ -4,7 +4,7 @@ Docker container project for running a Conan Exiles Enhanced dedicated server fr
 
 Current status: initial MVP scaffold with local image/script validation. The container uses SteamCMD by default, requests native Linux server files, and fails clearly if Steam only provides Windows server files. Wine is not included in the MVP.
 
-Local AppID download status: SteamCMD is still blocked on this Docker Desktop host because anonymous login fails with `FAILED (No Connection)`, including in the upstream SteamCMD image. A controlled DepotDownloader diagnostic run on June 23, 2026 did download AppID `443030`, verified native launcher `ConanSandboxServer.sh`, verified native executable `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`, and reached a bounded server launch/config probe. Full MVP success is still not claimed because the default SteamCMD path and Workshop mod behavior remain unverified end to end.
+Local AppID download status: Docker Desktop `4.72.0` / Engine `29.4.2` blocks Linux SteamCMD under the default builtin seccomp profile. Windows host SteamCMD works, and Linux SteamCMD works when run with diagnostic `seccomp=unconfined`, so this is a Docker security-profile compatibility issue, not a general Steam or host internet failure. A controlled DepotDownloader diagnostic run on June 23, 2026 did download AppID `443030`, verified native launcher `ConanSandboxServer.sh`, verified native executable `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`, and reached a bounded server launch/config probe. Full MVP success is still not claimed because full first boot and live Workshop mod loading remain unverified end to end.
 
 ## Requirements
 
@@ -24,13 +24,19 @@ docker compose logs -f
 
 The first boot downloads or updates the dedicated server, creates missing config files, applies environment settings, updates configured Workshop mods, creates backups when enabled, and starts the server.
 
-SteamCMD remains the default downloader:
+SteamCMD remains the default downloader variable:
 
 ```env
 DOWNLOAD_BACKEND=steamcmd
 ```
 
-For diagnostics or an explicit fallback test, set `DOWNLOAD_BACKEND=depotdownloader` or `DOWNLOAD_BACKEND=auto`. `auto` logs the SteamCMD failure path before trying DepotDownloader; it is not silent fallback.
+For normal local testing on Docker Engine `29.4.2`, set:
+
+```env
+DOWNLOAD_BACKEND=depotdownloader
+```
+
+For diagnostics or an explicit fallback test, set `DOWNLOAD_BACKEND=auto`. `auto` logs the SteamCMD failure path before trying DepotDownloader; it is not silent fallback.
 
 ## Ports
 
@@ -76,6 +82,8 @@ WORKSHOP_MOD_IDS=123456789,987654321
 
 The container downloads each mod, finds `.pak` files, and writes `ConanSandbox/Mods/modlist.txt` in the same order. Removed downloaded mods are deleted only when `PRUNE_REMOVED_MODS=true`.
 
+On Docker Engine `29.4.2`, SteamCMD Workshop download also requires the same seccomp workaround or a Docker upgrade. A single small Workshop mod download was verified with the diagnostic unconfined override, but live server loading is not yet verified.
+
 See `docs/MODS.md`.
 
 ## Backups
@@ -105,6 +113,13 @@ If SteamCMD anonymous login fails with `FAILED (No Connection)`, run the repeata
 .\tests\steamcmd-connectivity.ps1
 ```
 
+For Docker seccomp/security A/B checks:
+
+```powershell
+.\tests\windows-steamcmd-comparison.ps1
+.\tests\steamcmd-security-diagnostics.ps1
+```
+
 To compare against the pinned DepotDownloader backend:
 
 ```powershell
@@ -114,6 +129,14 @@ To compare against the pinned DepotDownloader backend:
 The local Codex host has public internet access but no LAN access. Do not use it for LAN, Rocky Linux, or Unraid connectivity tests.
 
 See `docs/TROUBLESHOOTING_STEAMCMD.md`.
+
+Diagnostic-only SteamCMD seccomp override:
+
+```powershell
+docker compose -f docker-compose.yml -f docker-compose.steamcmd-unconfined.diagnostic.yml up
+```
+
+This is less secure than default Docker isolation and is not recommended for normal use. Prefer upgrading Docker Engine/Desktop to a fixed version or using `DOWNLOAD_BACKEND=depotdownloader`.
 
 ## Rocky Linux
 
@@ -129,7 +152,7 @@ Default visibility is private. GitHub creation, remote setup, commit, and push s
 
 ## Known Limitations
 
-- SteamCMD default download path is still blocked on this Docker Desktop host.
-- Workshop mod download, `.pak` discovery, and ordered modlist behavior must be verified against real mod downloads.
+- SteamCMD default download path is blocked on Docker Engine `29.4.2` builtin seccomp.
+- Workshop single-mod download and `.pak` discovery were verified under diagnostic `seccomp=unconfined`; live server mod loading, multi-mod ordering, pruning, and backup interaction still need verification.
 - Wine fallback is intentionally absent.
 - Full WebGUI is planned for Phase 2 only.

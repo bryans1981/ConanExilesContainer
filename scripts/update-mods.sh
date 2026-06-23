@@ -18,13 +18,20 @@ backup_existing_modlist() {
 
 download_mods() {
     local mods=("$@")
-    local cmd
 
     if [[ "${#mods[@]}" -eq 0 ]]; then
         return 0
     fi
 
+    local cmd
+    local steamcmd_mod_log
+    local steamcmd_exit
+
     require_command "$STEAMCMD"
+    ensure_dir "${LOG_DIR}/steamcmd"
+    steamcmd_mod_log="${LOG_DIR}/steamcmd/update-mods-${WORKSHOP_APP_ID}-$(timestamp).log"
+
+    log "Downloading/updating Workshop mods with SteamCMD: workshop_app_id=${WORKSHOP_APP_ID}, mod_count=${#mods[@]}, log=${steamcmd_mod_log}"
     cmd=(
         "$STEAMCMD"
         +@ShutdownOnFailedCommand 1
@@ -40,7 +47,17 @@ download_mods() {
     done
 
     cmd+=(+quit)
-    HOME="$STEAM_DIR" "${cmd[@]}"
+    set +e
+    HOME="$STEAM_DIR" "${cmd[@]}" 2>&1 | tee "$steamcmd_mod_log"
+    steamcmd_exit="${PIPESTATUS[0]}"
+    set -e
+
+    if [[ "$steamcmd_exit" -ne 0 ]]; then
+        log "ERROR: SteamCMD Workshop download failed: workshop_app_id=${WORKSHOP_APP_ID}, mod_count=${#mods[@]}, exit_code=${steamcmd_exit}, log=${steamcmd_mod_log}"
+        return "$steamcmd_exit"
+    fi
+
+    return 0
 }
 
 write_modlist() {

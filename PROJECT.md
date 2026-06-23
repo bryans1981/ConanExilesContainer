@@ -22,7 +22,7 @@ Create a simple Docker container project for running a Conan Exiles Enhanced ded
 
 The MVP succeeds when a user can clone the repository, run `docker compose up -d` locally through Docker Desktop, and get the dedicated server installed, configured, optionally modded, backed up, and running without manually installing server files or Workshop mods.
 
-Current MVP status: scaffold and local image validation are complete, and DepotDownloader can download AppID `443030` from this Docker Desktop host. MVP success is still not claimed because SteamCMD remains blocked, Workshop mod download/modlist behavior is not fully verified, and the full compose first-boot path still needs end-to-end validation.
+Current MVP status: scaffold and local image validation are complete, and DepotDownloader can download AppID `443030` from this Docker Desktop host. MVP success is still not claimed because Docker Engine `29.4.2` blocks Linux SteamCMD under the default builtin seccomp profile, Workshop mod loading has not been verified in a live server launch, and the full compose first-boot path still needs end-to-end validation.
 
 ## Required Features
 
@@ -57,6 +57,13 @@ Current MVP status: scaffold and local image validation are complete, and DepotD
 - The downloaded server tree contains the verified native launcher `ConanSandboxServer.sh`.
 - The downloaded server tree contains the verified native executable `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
 - A bounded launch probe using the verified launcher loaded `ConanSandbox/Saved/Config/LinuxServer/ServerSettings.ini`, opened the game port, and reached `StartPlay`.
+- Windows host SteamCMD at `C:\Conan Exiles Server\DedicatedServerLauncher\steamcmd.exe` can start, anonymously log in, and print AppID `443030` app info.
+- Docker Engine `29.4.2` with builtin seccomp fails Linux SteamCMD login/app-info in both the project image and upstream `steamcmd/steamcmd:ubuntu-24`.
+- Diagnostic `seccomp=unconfined` makes Linux SteamCMD login/app-info pass in both the project image and upstream image. This proves the local SteamCMD failure is Docker security-profile specific, not a general Steam or host internet failure.
+- The diagnostic compose override `docker-compose.steamcmd-unconfined.diagnostic.yml` renders successfully and is available only as a diagnostic/emergency workaround.
+- Workshop mod download with SteamCMD works under diagnostic `seccomp=unconfined` for public Conan Workshop item `3720546346` (`[Enhanced] Unlimited Weight`).
+- Verified Workshop `.pak` path from that test: `steamapps/workshop/content/440900/3720546346/HEUnlimitedWeight.pak`.
+- The project wrote the active mod list at `ConanSandbox/Mods/modlist.txt` with the downloaded `.pak` path in `WORKSHOP_MOD_IDS` order.
 - SteamCMD starts successfully when using the seeded non-root Steam home under `/serverdata/steam`.
 - Config generation creates persistent `LinuxServer` config files and applies environment values without logging passwords.
 - Empty `WORKSHOP_MOD_IDS` creates an empty active mod list.
@@ -65,14 +72,15 @@ Current MVP status: scaffold and local image validation are complete, and DepotD
 
 ## Current Blocker
 
-SteamCMD anonymous login fails from Docker Desktop on this host before AppID `443030` can be downloaded through the default backend:
+SteamCMD anonymous login fails from Docker Desktop on this host before AppID `443030` can be downloaded through the default backend and default Docker security profile:
 
 ```text
+CreateBoundSocket: failed to create socket, error [no name available] (38)
 Connecting anonymously to Steam Public...
 FAILED (No Connection)
 ```
 
-The same failure happens with the upstream `steamcmd/steamcmd:ubuntu-24` image, including with Docker host networking, so this is currently treated as a local Steam connectivity blocker rather than a project-image failure.
+The same failure happens with the upstream `steamcmd/steamcmd:ubuntu-24` image under the default builtin seccomp profile. The same upstream image succeeds when run with `--security-opt seccomp=unconfined`, and Windows host SteamCMD succeeds directly. This is treated as a Docker Engine/Desktop `29.4.2` seccomp compatibility issue.
 
 Diagnostics run on June 23, 2026 show:
 
@@ -86,8 +94,21 @@ Diagnostics run on June 23, 2026 show:
 - Project image SteamCMD anonymous login/app-info/update checks: inconclusive/failing at SteamCMD connection.
 - Upstream `steamcmd/steamcmd:ubuntu-24` anonymous login/app-info checks: inconclusive/failing at SteamCMD connection.
 - Upstream SteamCMD with public DNS override and host networking: inconclusive/failing at SteamCMD connection.
+- Windows host SteamCMD comparison: pass.
+- Docker security diagnostics: default builtin seccomp fails; diagnostic `seccomp=unconfined` passes.
 
-Current evidence isolates the problem to SteamCMD/Steam protocol access from containers or a temporary Steam-side issue. It does not indicate a general host internet, generic container internet, Docker DNS, AppID availability, or native Linux file-layout failure.
+Current evidence isolates the problem to Docker `29.4.2` builtin seccomp behavior for Linux SteamCMD in containers. It does not indicate a general host internet, generic container internet, Docker DNS, AppID availability, or native Linux file-layout failure.
+
+Docker details captured locally:
+
+- Docker Desktop: `4.72.0 (225998)`
+- Docker Engine: `29.4.2`
+- containerd: `v2.2.3`
+- runc: `1.3.5`
+- Docker context: `desktop-linux`
+- Security options: `seccomp`, profile `builtin`
+
+Docker's Engine 29 release notes document that `29.4.2` blocks `AF_ALG` sockets and `socketcall(2)` in the default seccomp profile and lists SteamCMD as an affected workload. Docker's `29.4.3` notes document replacing that broad `socketcall` deny with targeted LSM controls. Preferred remediation is to upgrade Docker Engine/Desktop to a version containing that fix. The local project does not change the user's Docker installation automatically.
 
 DepotDownloader comparison on June 23, 2026:
 
@@ -104,7 +125,7 @@ DepotDownloader comparison on June 23, 2026:
 - Generated config files after the launch probe: `ServerSettings.ini`, `Engine.ini`, and `Game.ini`.
 - Server log path after the launch probe: `ConanSandbox/Saved/Logs/ConanSandbox.log`.
 
-This comparison proves that the native Linux server files are available through DepotDownloader from this environment. SteamCMD remains the default until the user approves changing it.
+This comparison proves that the native Linux server files are available through DepotDownloader from this environment. SteamCMD remains the default variable value, but `DOWNLOAD_BACKEND=depotdownloader` is the recommended normal backend on this Docker Desktop `29.4.2` host until Docker is upgraded or a safe seccomp profile is verified.
 
 External SteamDB metadata, last checked June 23, 2026, lists AppID `443030` as supporting Windows and Linux, with Linux depot `443032` and Linux launch executable `ConanSandbox\Binaries\Linux\ConanSandboxServer`. This is useful orientation only; it does not replace local verification from downloaded files.
 
@@ -181,7 +202,9 @@ Backups are timestamped `.tar.gz` archives in `BACKUP_LOCATION`. They include pe
 
 `WORKSHOP_MOD_IDS` is parsed as a comma-separated ordered list. Each ID is downloaded with SteamCMD using Workshop app ID `440900`. The generated mod list is written to `ConanSandbox/Mods/modlist.txt` in the same order. Removed downloads are pruned only when `PRUNE_REMOVED_MODS=true`.
 
-Workshop app ID and modlist path still require full validation with real downloaded mod files. A diagnostic DepotDownloader `-pubfile` manifest-only probe against public Conan Workshop item `880454836` reached Steam anonymously with `-app 440900`, but it did not prove `.pak` download layout, ordered modlist generation, or server-side mod loading. `MOD_DOWNLOAD_BACKEND` is therefore not implemented.
+Workshop app ID `440900`, `.pak` discovery, and project modlist writing were verified with real downloaded mod files from public Conan Workshop item `3720546346`. The generated mod list path is `ConanSandbox/Mods/modlist.txt`, and the test line was the absolute `.pak` path under the Steam Workshop content directory. Server-side mod loading from that modlist still requires a live modded server launch before MVP success is claimed.
+
+A DepotDownloader full pubfile download for the same item succeeded once and produced `HEUnlimitedWeight.pak`, but later immediate retries failed to connect to Steam. `MOD_DOWNLOAD_BACKEND` is therefore not implemented.
 
 ## Testing Requirements
 
@@ -193,7 +216,7 @@ Workshop app ID and modlist path still require full validation with real downloa
 - Confirm server process starts and stops gracefully.
 - Confirm restart does not wipe saves/config.
 - Confirm update toggle behavior.
-- Confirm Workshop mod download, ordering, removal, pruning, and backup behavior. This remains unverified.
+- Confirm Workshop mod download, ordering, removal, pruning, and backup behavior. Single-mod download/order is verified under diagnostic `seccomp=unconfined`; multi-mod ordering, pruning, backup interaction, and live server loading remain unverified.
 - Confirm logs do not expose passwords.
 - Confirm project-control docs are current.
 - Run `tests/steamcmd-connectivity.ps1` or `tests/steamcmd-connectivity.sh` when SteamCMD anonymous login or AppID download fails.

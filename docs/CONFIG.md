@@ -45,6 +45,8 @@ These config paths are implementation targets and must be checked against the re
 
 `steamcmd` remains the default. `depotdownloader` uses the pinned image-installed DepotDownloader binary. `auto` tries SteamCMD first, logs the SteamCMD failure path, then tries DepotDownloader. It does not silently hide the first backend failure.
 
+On Docker Engine `29.4.2`, local diagnostics show Linux SteamCMD is blocked by Docker's builtin seccomp profile. For normal local testing on that Docker version, use `DOWNLOAD_BACKEND=depotdownloader` or upgrade Docker Engine/Desktop to a fixed version. The `docker-compose.steamcmd-unconfined.diagnostic.yml` override exists only for diagnostics/emergency testing.
+
 DepotDownloader support is currently for server AppID `443030` only. Workshop mods still use SteamCMD.
 
 ## Mod Variables
