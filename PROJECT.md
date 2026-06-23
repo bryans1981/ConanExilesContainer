@@ -22,11 +22,12 @@ Create a simple Docker container project for running a Conan Exiles Enhanced ded
 
 The MVP succeeds when a user can clone the repository, run `docker compose up -d` locally through Docker Desktop, and get the dedicated server installed, configured, optionally modded, backed up, and running without manually installing server files or Workshop mods.
 
-Current MVP status: scaffold and local image validation are complete, but MVP success is not claimed. Docker Desktop on this host cannot currently complete Steam anonymous login, so AppID `443030` download and native executable verification remain blocked.
+Current MVP status: scaffold and local image validation are complete, and DepotDownloader can download AppID `443030` from this Docker Desktop host. MVP success is still not claimed because SteamCMD remains blocked, Workshop mod download/modlist behavior is not fully verified, and the full compose first-boot path still needs end-to-end validation.
 
 ## Required Features
 
 - SteamCMD install/update for AppID `443030`.
+- Controlled `DOWNLOAD_BACKEND` support for `steamcmd`, `depotdownloader`, and explicit `auto` fallback.
 - Native Linux server executable detection.
 - Clear failure if no native Linux executable exists.
 - Persistent server files, Steam/cache, config, logs, backups, and mod data through mapped volumes.
@@ -51,6 +52,11 @@ Current MVP status: scaffold and local image validation are complete, but MVP su
 - `docker compose config` succeeds.
 - Bash syntax checks pass for all scripts.
 - `docker compose build` succeeds.
+- DepotDownloader `DepotDownloader_3.4.0` installs into the image at build time from the official SteamRE GitHub release.
+- `DOWNLOAD_BACKEND=depotdownloader` successfully downloaded AppID `443030` on June 23, 2026.
+- The downloaded server tree contains the verified native launcher `ConanSandboxServer.sh`.
+- The downloaded server tree contains the verified native executable `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
+- A bounded launch probe using the verified launcher loaded `ConanSandbox/Saved/Config/LinuxServer/ServerSettings.ini`, opened the game port, and reached `StartPlay`.
 - SteamCMD starts successfully when using the seeded non-root Steam home under `/serverdata/steam`.
 - Config generation creates persistent `LinuxServer` config files and applies environment values without logging passwords.
 - Empty `WORKSHOP_MOD_IDS` creates an empty active mod list.
@@ -59,7 +65,7 @@ Current MVP status: scaffold and local image validation are complete, but MVP su
 
 ## Current Blocker
 
-SteamCMD anonymous login fails from Docker Desktop on this host before AppID `443030` can be downloaded:
+SteamCMD anonymous login fails from Docker Desktop on this host before AppID `443030` can be downloaded through the default backend:
 
 ```text
 Connecting anonymously to Steam Public...
@@ -81,7 +87,24 @@ Diagnostics run on June 23, 2026 show:
 - Upstream `steamcmd/steamcmd:ubuntu-24` anonymous login/app-info checks: inconclusive/failing at SteamCMD connection.
 - Upstream SteamCMD with public DNS override and host networking: inconclusive/failing at SteamCMD connection.
 
-Current evidence isolates the problem to SteamCMD/Steam protocol access from containers or a temporary Steam-side issue. It does not indicate a general host internet, generic container internet, or Docker DNS failure.
+Current evidence isolates the problem to SteamCMD/Steam protocol access from containers or a temporary Steam-side issue. It does not indicate a general host internet, generic container internet, Docker DNS, AppID availability, or native Linux file-layout failure.
+
+DepotDownloader comparison on June 23, 2026:
+
+- Official release checked: `DepotDownloader_3.4.0`.
+- Image binary reported `DepotDownloader v3.4.0+c553ef4d60c00a4f5fd16c9fe017f569001589ff`.
+- Anonymous AppID `443030` manifest-only access passed.
+- Anonymous AppID `443030` Linux download passed with `DOWNLOAD_BACKEND=depotdownloader`.
+- Downloaded depots included Linux depot `443032`.
+- Download summary reported `3997931312` bytes downloaded and `4727137130` bytes uncompressed.
+- Verified launcher: `ConanSandboxServer.sh`.
+- Verified executable: `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
+- Initial downloaded config file found before first launch: `Engine/Config/StagedBuild_ConanSandbox.ini`.
+- Generated persistent config path after `configure-server.sh`: `ConanSandbox/Saved/Config/LinuxServer/`.
+- Generated config files after the launch probe: `ServerSettings.ini`, `Engine.ini`, and `Game.ini`.
+- Server log path after the launch probe: `ConanSandbox/Saved/Logs/ConanSandbox.log`.
+
+This comparison proves that the native Linux server files are available through DepotDownloader from this environment. SteamCMD remains the default until the user approves changing it.
 
 External SteamDB metadata, last checked June 23, 2026, lists AppID `443030` as supporting Windows and Linux, with Linux depot `443032` and Linux launch executable `ConanSandbox\Binaries\Linux\ConanSandboxServer`. This is useful orientation only; it does not replace local verification from downloaded files.
 
@@ -115,8 +138,9 @@ References:
 | `RCON_ENABLED` | `true` | RCON toggle | `ServerSettings.ini` / `ServerSettings.RconEnabled` |
 | `RCON_PORT` | `25575` | RCON TCP port | `ServerSettings.ini` / `ServerSettings.RconPort` |
 | `RCON_PASSWORD` | empty | RCON password | `ServerSettings.ini` / `ServerSettings.RconPassword` |
-| `UPDATE_SERVER_ON_START` | `true` | Run SteamCMD update on startup | Startup behavior |
-| `VALIDATE_SERVER_FILES` | `false` | Add SteamCMD validation | SteamCMD update behavior |
+| `UPDATE_SERVER_ON_START` | `true` | Run selected download backend update on startup | Startup behavior |
+| `VALIDATE_SERVER_FILES` | `false` | Add backend validation when supported | SteamCMD/DepotDownloader update behavior |
+| `DOWNLOAD_BACKEND` | `steamcmd` | Server download backend: `steamcmd`, `depotdownloader`, or `auto` | Startup update behavior |
 | `AUTO_GAME_UPDATE` | `false` | Planned background update loop | Not active in MVP |
 | `AUTO_GAME_UPDATE_INTERVAL_MINUTES` | `360` | Planned loop interval | Not active in MVP |
 | `UPDATE_MODS_ON_START` | `true` | Download/update mods on startup | Startup behavior |
@@ -129,7 +153,7 @@ References:
 | `BACKUP_RETENTION_DAYS` | `14` | Delete older backup archives when positive | Backup script |
 | `EXTRA_ARGS` | empty | Extra server launch args, split on spaces | Launch command |
 
-Config key paths above are the initial implementation targets and must be verified against the actual downloaded native server files before claiming MVP success.
+Config key paths above were generated and loaded during the bounded DepotDownloader launch probe. Workshop/modlist behavior and full first boot still must be verified before claiming MVP success.
 
 ## Ports
 
@@ -157,19 +181,19 @@ Backups are timestamped `.tar.gz` archives in `BACKUP_LOCATION`. They include pe
 
 `WORKSHOP_MOD_IDS` is parsed as a comma-separated ordered list. Each ID is downloaded with SteamCMD using Workshop app ID `440900`. The generated mod list is written to `ConanSandbox/Mods/modlist.txt` in the same order. Removed downloads are pruned only when `PRUNE_REMOVED_MODS=true`.
 
-Workshop app ID and modlist path must be validated with real downloaded server/mod files during Docker Desktop testing.
+Workshop app ID and modlist path still require full validation with real downloaded mod files. A diagnostic DepotDownloader `-pubfile` manifest-only probe against public Conan Workshop item `880454836` reached Steam anonymously with `-app 440900`, but it did not prove `.pak` download layout, ordered modlist generation, or server-side mod loading. `MOD_DOWNLOAD_BACKEND` is therefore not implemented.
 
 ## Testing Requirements
 
 - Build the image locally.
 - Run clean first boot with empty `./data` folders.
-- Confirm server files download.
-- Confirm native Linux executable exists.
+- Confirm server files download with SteamCMD default path or an explicitly selected alternate backend.
+- Confirm native Linux executable exists. Verified through DepotDownloader on June 23, 2026.
 - Confirm config files are created and env values apply.
 - Confirm server process starts and stops gracefully.
 - Confirm restart does not wipe saves/config.
 - Confirm update toggle behavior.
-- Confirm Workshop mod download, ordering, removal, pruning, and backup behavior.
+- Confirm Workshop mod download, ordering, removal, pruning, and backup behavior. This remains unverified.
 - Confirm logs do not expose passwords.
 - Confirm project-control docs are current.
 - Run `tests/steamcmd-connectivity.ps1` or `tests/steamcmd-connectivity.sh` when SteamCMD anonymous login or AppID download fails.

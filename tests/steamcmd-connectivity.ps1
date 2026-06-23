@@ -12,7 +12,7 @@ $ProgressPreference = 'SilentlyContinue'
 $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 if ([string]::IsNullOrWhiteSpace($LogRoot)) {
     $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
-    $LogRoot = Join-Path $script:RepoRoot "test-results\steamcmd-connectivity\$stamp"
+    $LogRoot = Join-Path $script:RepoRoot "test-results\steamcmd-connectivity\$stamp-$PID"
 }
 
 New-Item -ItemType Directory -Force -Path $LogRoot | Out-Null

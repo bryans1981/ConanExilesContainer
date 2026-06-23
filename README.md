@@ -2,9 +2,9 @@
 
 Docker container project for running a Conan Exiles Enhanced dedicated server from Steam dedicated server AppID `443030`.
 
-Current status: initial MVP scaffold with local image/script validation. The container uses SteamCMD, requests native Linux server files, and fails clearly if Steam only provides Windows server files. Wine is not included in the MVP.
+Current status: initial MVP scaffold with local image/script validation. The container uses SteamCMD by default, requests native Linux server files, and fails clearly if Steam only provides Windows server files. Wine is not included in the MVP.
 
-Local AppID download status: blocked on this Docker Desktop host because SteamCMD anonymous login fails with `FAILED (No Connection)`, including in the upstream SteamCMD image. External SteamDB metadata currently lists Linux support, depot `443032`, and Linux executable `ConanSandbox\Binaries\Linux\ConanSandboxServer`, but this still needs verification from a completed local download.
+Local AppID download status: SteamCMD is still blocked on this Docker Desktop host because anonymous login fails with `FAILED (No Connection)`, including in the upstream SteamCMD image. A controlled DepotDownloader diagnostic run on June 23, 2026 did download AppID `443030`, verified native launcher `ConanSandboxServer.sh`, verified native executable `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`, and reached a bounded server launch/config probe. Full MVP success is still not claimed because the default SteamCMD path and Workshop mod behavior remain unverified end to end.
 
 ## Requirements
 
@@ -23,6 +23,14 @@ docker compose logs -f
 ```
 
 The first boot downloads or updates the dedicated server, creates missing config files, applies environment settings, updates configured Workshop mods, creates backups when enabled, and starts the server.
+
+SteamCMD remains the default downloader:
+
+```env
+DOWNLOAD_BACKEND=steamcmd
+```
+
+For diagnostics or an explicit fallback test, set `DOWNLOAD_BACKEND=depotdownloader` or `DOWNLOAD_BACKEND=auto`. `auto` logs the SteamCMD failure path before trying DepotDownloader; it is not silent fallback.
 
 ## Ports
 
@@ -52,9 +60,9 @@ See `docs/CONFIG.md` for the full variable map.
 
 ## Updates
 
-`UPDATE_SERVER_ON_START=true` runs SteamCMD on container startup. If `UPDATE_SERVER_ON_START=false` and the app manifest already exists, update is skipped. If server files do not exist, the container downloads them even when the update flag is false.
+`UPDATE_SERVER_ON_START=true` runs the selected download backend on container startup. If `UPDATE_SERVER_ON_START=false` and existing server files are detected, update is skipped. If server files do not exist, the container downloads them even when the update flag is false.
 
-`VALIDATE_SERVER_FILES=true` adds SteamCMD validation.
+`VALIDATE_SERVER_FILES=true` adds backend validation when supported.
 
 `AUTO_GAME_UPDATE` and `AUTO_MOD_UPDATE` are planned variables only in the MVP. The container logs that they are not active if enabled.
 
@@ -97,6 +105,12 @@ If SteamCMD anonymous login fails with `FAILED (No Connection)`, run the repeata
 .\tests\steamcmd-connectivity.ps1
 ```
 
+To compare against the pinned DepotDownloader backend:
+
+```powershell
+.\tests\depotdownloader-connectivity.ps1
+```
+
 The local Codex host has public internet access but no LAN access. Do not use it for LAN, Rocky Linux, or Unraid connectivity tests.
 
 See `docs/TROUBLESHOOTING_STEAMCMD.md`.
@@ -115,7 +129,7 @@ Default visibility is private. GitHub creation, remote setup, commit, and push s
 
 ## Known Limitations
 
-- Native Linux server availability for AppID `443030` still needs proof from a completed Docker first boot on a host where SteamCMD anonymous login works.
-- Config key mapping and modlist behavior must be verified against downloaded server files.
+- SteamCMD default download path is still blocked on this Docker Desktop host.
+- Workshop mod download, `.pak` discovery, and ordered modlist behavior must be verified against real mod downloads.
 - Wine fallback is intentionally absent.
 - Full WebGUI is planned for Phase 2 only.

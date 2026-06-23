@@ -46,13 +46,19 @@ docker compose down
 - Bash syntax checks pass for all scripts.
 - `docker compose build` passes.
 - SteamCMD starts successfully from the project image using the seeded `/serverdata/steam` home.
+- DepotDownloader `DepotDownloader_3.4.0` installs into the project image.
+- `DOWNLOAD_BACKEND=depotdownloader` downloaded AppID `443030` successfully on June 23, 2026.
+- Verified native launcher from the downloaded files: `ConanSandboxServer.sh`.
+- Verified native executable from the downloaded files: `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
+- Bounded launch/config probe loaded `ConanSandbox/Saved/Config/LinuxServer/ServerSettings.ini`, opened port `7777`, and reached `StartPlay`.
 - Config generation/linking passes.
 - Empty mod list handling passes.
 - Backup creation passes.
 - Start without downloaded files fails loudly with: `Cannot start: no native Linux Conan server executable found under /serverdata/serverfiles.`
 - AppID `443030` download is blocked because SteamCMD anonymous login fails from Docker Desktop with `FAILED (No Connection)`.
 - The same Steam anonymous login failure occurs in the upstream `steamcmd/steamcmd:ubuntu-24` image, including with `--network host`.
-- Full first boot test is blocked until SteamCMD can connect to Steam Public from this host or another Docker host.
+- Full first boot through the default SteamCMD backend is blocked until SteamCMD can connect to Steam Public from this host or another Docker host.
+- Full Workshop mod handling remains unverified.
 
 External metadata checked June 23, 2026:
 

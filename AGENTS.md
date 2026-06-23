@@ -14,6 +14,7 @@ Rules for Codex and future agents:
 - Run local Docker Desktop testing before claiming MVP success.
 - Do not attempt LAN, Rocky Linux, or Unraid connectivity tests from the local Codex host. This environment has public internet access only and no LAN access by design.
 - When SteamCMD connectivity fails, compare host public internet, generic container internet/DNS, the project image, and the upstream SteamCMD image before changing app logic.
+- Keep SteamCMD as the default server download backend unless verified evidence and user approval justify changing the default. Alternate downloaders must be selected explicitly, logged clearly, and never used as a silent fallback.
 - Prefer small, testable changes.
 - Keep the image generic and portable. Do not hardcode host-specific paths.
 - Update `SESSION_HANDOFF.md` before stopping work.
@@ -32,6 +33,8 @@ Current implementation notes:
 
 - AppID `443030` is used for server install/update.
 - SteamCMD is the first install method, using the `steamcmd/steamcmd:ubuntu-24` base image.
+- `DOWNLOAD_BACKEND=steamcmd` is the default. `depotdownloader` and `auto` exist as controlled diagnostic/fallback options.
+- DepotDownloader is pinned to `DepotDownloader_3.4.0` from the official SteamRE GitHub release and installed into the image at build time.
 - The entrypoint seeds `/serverdata/steam` with the base image's bootstrapped SteamCMD home so SteamCMD can run as the configured non-root user.
 - The container explicitly requests Linux platform files from SteamCMD and fails if only Windows server executables are found.
 - Auto game update and auto mod update variables exist but the background loops are not active in the MVP.

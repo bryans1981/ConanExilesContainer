@@ -6,12 +6,14 @@ set -Eeuo pipefail
 source /scripts/common.sh
 
 main() {
+    local native_launcher
     local native_executable
     local windows_executable
     local extra_args=()
 
+    native_launcher="$(find_native_launcher)"
     native_executable="$(find_native_executable)"
-    if [[ -z "$native_executable" ]]; then
+    if [[ -z "$native_launcher" && -z "$native_executable" ]]; then
         windows_executable="$(find_windows_executable)"
         if [[ -n "$windows_executable" ]]; then
             die "Cannot start: only Windows server executable found (${windows_executable}). Native Linux is required for the MVP; Wine fallback is not implemented."
@@ -19,18 +21,26 @@ main() {
         die "Cannot start: no native Linux Conan server executable found under ${SERVER_DIR}."
     fi
 
-    chmod +x "$native_executable" || true
-
     if [[ -n "${EXTRA_ARGS:-}" ]]; then
         read -r -a extra_args <<< "${EXTRA_ARGS}"
     fi
 
-    cd "$(dirname "$native_executable")"
     printf '%s\n' "$$" > "$SERVER_PID_FILE"
 
-    log "Launching server executable: ${native_executable}"
-    log "Launch arguments: -log ${EXTRA_ARGS:-}"
-    exec "$native_executable" -log "${extra_args[@]}"
+    if [[ -n "$native_launcher" ]]; then
+        chmod +x "$native_launcher" || true
+        [[ -n "$native_executable" ]] && chmod +x "$native_executable" || true
+        cd "$(dirname "$native_launcher")"
+        log "Launching server via verified native launcher: ${native_launcher}"
+        log "Launch arguments: -log ${EXTRA_ARGS:-}"
+        exec "$native_launcher" -log "${extra_args[@]}"
+    fi
+
+    chmod +x "$native_executable" || true
+    cd "$(dirname "$native_executable")"
+    log "Launching native server executable directly: ${native_executable}"
+    log "Launch arguments: ConanSandbox -log ${EXTRA_ARGS:-}"
+    exec "$native_executable" ConanSandbox -log "${extra_args[@]}"
 }
 
 main "$@"

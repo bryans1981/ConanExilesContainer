@@ -21,9 +21,15 @@ Behavior:
 
 `PRUNE_REMOVED_MODS=true` removes downloaded Workshop directories that are no longer listed. `PRUNE_REMOVED_MODS=false` leaves old downloads on disk but removes them from the active mod list.
 
+DepotDownloader note:
+
+- Server-file DepotDownloader support does not currently change Workshop mod behavior.
+- A diagnostic DepotDownloader `-pubfile` manifest-only check against public Conan Workshop item `880454836` reached Steam anonymously with `-app 440900`.
+- That check did not prove `.pak` download layout, ordered modlist generation, pruning, or server-side mod loading.
+- `MOD_DOWNLOAD_BACKEND` is not implemented.
+
 Verification still required:
 
-- Confirm Workshop app ID `440900` is correct for Conan Exiles Enhanced mods.
 - Confirm AppID `443030` expects `ConanSandbox/Mods/modlist.txt`.
 - Confirm whether modlist entries should be absolute `.pak` paths or server-relative paths.
 - Confirm Workshop downloads once SteamCMD anonymous login works from the Docker host.

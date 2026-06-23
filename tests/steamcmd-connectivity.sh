@@ -63,7 +63,7 @@ PROJECT_IMAGE="${PROJECT_IMAGE:-conan-exiles-container:local}"
 STEAMCMD_IMAGE="${STEAMCMD_IMAGE:-steamcmd/steamcmd:ubuntu-24}"
 
 if [[ -z "$LOG_ROOT" ]]; then
-    LOG_ROOT="${REPO_ROOT}/test-results/steamcmd-connectivity/$(date -u +%Y%m%dT%H%M%SZ)"
+    LOG_ROOT="${REPO_ROOT}/test-results/steamcmd-connectivity/$(date -u +%Y%m%dT%H%M%SZ)-$$"
 fi
 
 mkdir -p "$LOG_ROOT"

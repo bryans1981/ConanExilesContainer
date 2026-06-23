@@ -26,7 +26,31 @@ Current evidence points to a Docker Desktop, local network, firewall, proxy, VPN
 
 Do not treat lack of LAN access as a SteamCMD blocker. This Codex host is intentionally public-internet-only.
 
-Do not claim a fix or MVP success until AppID `443030` downloads successfully and the real server executable, paths, config files, launch behavior, Workshop handling, and modlist behavior are verified from actual downloaded files.
+Do not claim a full fix or MVP success until AppID `443030` downloads successfully through the intended production path and the real server executable, paths, config files, launch behavior, Workshop handling, and modlist behavior are verified from actual downloaded files.
+
+## DepotDownloader Comparison
+
+DepotDownloader was added as a controlled diagnostic/fallback backend, not as a silent replacement for SteamCMD. SteamCMD remains the default.
+
+Current backend values:
+
+- `DOWNLOAD_BACKEND=steamcmd`: use SteamCMD only.
+- `DOWNLOAD_BACKEND=depotdownloader`: use DepotDownloader only.
+- `DOWNLOAD_BACKEND=auto`: try SteamCMD first, log its failure path, then try DepotDownloader.
+
+Verified on June 23, 2026:
+
+- DepotDownloader source: official SteamRE GitHub release `DepotDownloader_3.4.0`.
+- Image binary output: `DepotDownloader v3.4.0+c553ef4d60c00a4f5fd16c9fe017f569001589ff`.
+- Anonymous AppID `443030` manifest-only check passed.
+- `DOWNLOAD_BACKEND=depotdownloader` downloaded AppID `443030` Linux files.
+- Verified launcher: `ConanSandboxServer.sh`.
+- Verified executable: `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
+- Generated config path during launch probe: `ConanSandbox/Saved/Config/LinuxServer/`.
+- Server log path during launch probe: `ConanSandbox/Saved/Logs/ConanSandbox.log`.
+- The bounded launch probe reached `Game Engine Initialized`, loaded `ServerSettings.ini`, listened on port `7777`, and entered `StartPlay`.
+
+This proves AppID `443030` native Linux files are reachable through DepotDownloader from this environment. It does not prove that SteamCMD is fixed and does not prove Workshop mod behavior.
 
 ## Repeatable Diagnostics
 
@@ -44,10 +68,21 @@ docker compose build
 ./tests/steamcmd-connectivity.sh
 ```
 
+DepotDownloader comparison diagnostics:
+
+```powershell
+.\tests\depotdownloader-connectivity.ps1
+```
+
+```bash
+./tests/depotdownloader-connectivity.sh
+```
+
 Diagnostics write raw logs and a summary under:
 
 ```text
 ./test-results/steamcmd-connectivity/
+./test-results/depotdownloader-connectivity/
 ```
 
 By default, SteamCMD login/update failures are reported as inconclusive checks but do not make the script exit nonzero. To use the diagnostics in a stricter CI-like mode, enable SteamCMD failure mode:
@@ -71,6 +106,7 @@ By default, SteamCMD login/update failures are reported as inconclusive checks b
 - Check Docker Desktop backend network rules.
 - Check VPN or proxy interference.
 - Check SteamCMD-specific protocol/login behavior.
+- Compare with explicit `DOWNLOAD_BACKEND=depotdownloader` only when diagnosing SteamCMD-specific failures.
 - Try public DNS override checks with Docker `--dns 1.1.1.1` and `--dns 8.8.8.8`.
 - Try Docker Desktop host networking if it is available/enabled.
 - Retest on the Rocky Linux Docker host as a clean comparison later. Do not attempt Rocky Linux, Unraid, or LAN connectivity tests from the local Codex host.
@@ -79,4 +115,6 @@ By default, SteamCMD login/update failures are reported as inconclusive checks b
 
 - Do not switch to Wine as a workaround for this connectivity blocker.
 - Do not mark download, launch, update, mod, or MVP behavior as working without real AppID `443030` files.
+- Do not make DepotDownloader the default without verified reason and explicit user approval.
+- Do not claim Workshop mod fallback support until real `.pak` layout, modlist order, and failure behavior are verified.
 - Do not print tokens, passwords, or secrets in diagnostic output.

@@ -35,12 +35,17 @@ These config paths are implementation targets and must be checked against the re
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `UPDATE_SERVER_ON_START` | `true` | Runs SteamCMD update before launch. |
-| `VALIDATE_SERVER_FILES` | `false` | Adds SteamCMD validation. |
+| `UPDATE_SERVER_ON_START` | `true` | Runs the selected server download backend before launch. |
+| `VALIDATE_SERVER_FILES` | `false` | Adds validation when the selected backend supports it. |
+| `DOWNLOAD_BACKEND` | `steamcmd` | Server download backend. Supported values are `steamcmd`, `depotdownloader`, and `auto`. |
 | `AUTO_GAME_UPDATE` | `false` | Planned only; no background loop in MVP. |
 | `AUTO_GAME_UPDATE_INTERVAL_MINUTES` | `360` | Planned loop interval. |
 | `UPDATE_MODS_ON_START` | `true` | Downloads/updates Workshop mods before launch. |
 | `AUTO_MOD_UPDATE` | `false` | Planned only; no background loop in MVP. |
+
+`steamcmd` remains the default. `depotdownloader` uses the pinned image-installed DepotDownloader binary. `auto` tries SteamCMD first, logs the SteamCMD failure path, then tries DepotDownloader. It does not silently hide the first backend failure.
+
+DepotDownloader support is currently for server AppID `443030` only. Workshop mods still use SteamCMD.
 
 ## Mod Variables
 
