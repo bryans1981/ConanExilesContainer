@@ -17,7 +17,8 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `scripts/`: container lifecycle scripts.
 - `docs/`: focused operational docs.
 - `data/`: ignored local runtime data for Docker Desktop volume mounts.
-- `tests/`: local validation scripts if added later.
+- `tests/`: local validation and diagnostic scripts.
+- `test-results/`: ignored local diagnostic output.
 
 ## Script Responsibilities
 
@@ -29,6 +30,8 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `scripts/backup.sh`: timestamped archive creation and retention cleanup.
 - `scripts/start-server.sh`: native executable discovery and foreground server launch.
 - `scripts/healthcheck.sh`: server process healthcheck.
+- `tests/steamcmd-connectivity.ps1`: Windows/PowerShell SteamCMD connectivity diagnostics for host public internet, container networking/DNS, project image SteamCMD, upstream SteamCMD, DNS overrides, and optional host networking.
+- `tests/steamcmd-connectivity.sh`: Bash SteamCMD connectivity diagnostics for compatible Linux/macOS/Git Bash shells.
 
 ## Data And Volume Layout
 
@@ -50,6 +53,7 @@ Local Docker Desktop paths:
 
 ## Current Runtime Assumptions
 
+- The local Codex host has public internet access but no LAN access; Rocky Linux and Unraid connectivity tests must not be attempted from this host.
 - SteamCMD can access AppID `443030` anonymously.
 - Native Linux server files exist or the container will fail loudly.
 - External SteamDB metadata currently lists Linux depot `443032` and Linux executable `ConanSandbox\Binaries\Linux\ConanSandboxServer`, but local download verification is blocked.
@@ -68,6 +72,7 @@ All assumptions above must be verified by local Docker Desktop testing before MV
 - `docs/LOCAL_DOCKER_DESKTOP.md`: local test procedure and current status.
 - `docs/ROCKY_LINUX.md`: Rocky Linux deployment/test notes.
 - `docs/WEBGUI_PHASE_2.md`: future WebGUI design.
+- `docs/TROUBLESHOOTING_STEAMCMD.md`: SteamCMD/Docker Desktop connectivity blocker explanation and diagnostic workflow.
 
 ## Git And GitHub Workflow
 

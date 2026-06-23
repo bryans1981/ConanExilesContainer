@@ -68,12 +68,35 @@ FAILED (No Connection)
 
 The same failure happens with the upstream `steamcmd/steamcmd:ubuntu-24` image, including with Docker host networking, so this is currently treated as a local Steam connectivity blocker rather than a project-image failure.
 
+Diagnostics run on June 23, 2026 show:
+
+- Host public DNS: pass.
+- Host public HTTPS: pass.
+- Docker Desktop engine: pass.
+- Generic container DNS: pass.
+- Generic container HTTPS: pass.
+- Generic container Ubuntu package repository reachability: pass.
+- Docker DNS overrides with `1.1.1.1` and `8.8.8.8`: pass.
+- Project image SteamCMD anonymous login/app-info/update checks: inconclusive/failing at SteamCMD connection.
+- Upstream `steamcmd/steamcmd:ubuntu-24` anonymous login/app-info checks: inconclusive/failing at SteamCMD connection.
+- Upstream SteamCMD with public DNS override and host networking: inconclusive/failing at SteamCMD connection.
+
+Current evidence isolates the problem to SteamCMD/Steam protocol access from containers or a temporary Steam-side issue. It does not indicate a general host internet, generic container internet, or Docker DNS failure.
+
 External SteamDB metadata, last checked June 23, 2026, lists AppID `443030` as supporting Windows and Linux, with Linux depot `443032` and Linux launch executable `ConanSandbox\Binaries\Linux\ConanSandboxServer`. This is useful orientation only; it does not replace local verification from downloaded files.
 
 References:
 
 - https://steamdb.info/app/443030/depots/
 - https://steamdb.info/app/443030/config/
+
+## Local Environment Clarification
+
+- The local Codex host has public internet access.
+- The local Codex host does not have LAN access by design.
+- LAN, Rocky Linux, and Unraid connectivity tests are not valid from this environment.
+- Docker Desktop diagnostics from this host should focus on public internet access, container networking, Docker DNS, firewall/security filtering, proxy/VPN behavior, and SteamCMD/Steam protocol access from inside containers.
+- Rocky Linux comparison testing must be run later from the Rocky Linux Docker host itself.
 
 ## Environment Variables
 
@@ -149,6 +172,7 @@ Workshop app ID and modlist path must be validated with real downloaded server/m
 - Confirm Workshop mod download, ordering, removal, pruning, and backup behavior.
 - Confirm logs do not expose passwords.
 - Confirm project-control docs are current.
+- Run `tests/steamcmd-connectivity.ps1` or `tests/steamcmd-connectivity.sh` when SteamCMD anonymous login or AppID download fails.
 
 ## Phase 2 WebGUI Notes
 

@@ -12,6 +12,8 @@ Rules for Codex and future agents:
 - Keep passwords and secrets out of logs.
 - Keep `AGENTS.md`, `PROJECT.md`, `PROJECT_MAP.md`, and `SESSION_HANDOFF.md` updated after meaningful changes.
 - Run local Docker Desktop testing before claiming MVP success.
+- Do not attempt LAN, Rocky Linux, or Unraid connectivity tests from the local Codex host. This environment has public internet access only and no LAN access by design.
+- When SteamCMD connectivity fails, compare host public internet, generic container internet/DNS, the project image, and the upstream SteamCMD image before changing app logic.
 - Prefer small, testable changes.
 - Keep the image generic and portable. Do not hardcode host-specific paths.
 - Update `SESSION_HANDOFF.md` before stopping work.

@@ -89,6 +89,18 @@ Watch logs to verify whether AppID `443030` provides native Linux server files. 
 
 See `docs/LOCAL_DOCKER_DESKTOP.md`.
 
+## Troubleshooting
+
+If SteamCMD anonymous login fails with `FAILED (No Connection)`, run the repeatable diagnostics:
+
+```powershell
+.\tests\steamcmd-connectivity.ps1
+```
+
+The local Codex host has public internet access but no LAN access. Do not use it for LAN, Rocky Linux, or Unraid connectivity tests.
+
+See `docs/TROUBLESHOOTING_STEAMCMD.md`.
+
 ## Rocky Linux
 
 Rocky Linux testing starts after local Docker Desktop works. Clone or copy the repo to the Rocky Linux host, use the same compose file, and map volumes to normal host paths.
@@ -97,21 +109,9 @@ See `docs/ROCKY_LINUX.md`.
 
 ## GitHub Repository
 
-GitHub CLI is not installed on the current host. Create a private GitHub repo named `ConanExilesContainer`, then run:
+Repository: `https://github.com/bryans1981/ConanExilesContainer`
 
-```powershell
-git remote add origin https://github.com/<YOUR_GITHUB_USER>/ConanExilesContainer.git
-git branch -M main
-git push -u origin main
-```
-
-If GitHub CLI is installed and authenticated later:
-
-```powershell
-gh repo create ConanExilesContainer --private --source . --remote origin --push
-```
-
-Do not make the repository public without explicit approval.
+Default visibility is private. GitHub creation, remote setup, commit, and push should be automated when authenticated access exists. Do not make the repository public without explicit approval.
 
 ## Known Limitations
 
