@@ -26,9 +26,9 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `scripts/common.sh`: shared logging, boolean parsing, path defaults, validation, and server executable discovery.
 - `scripts/entrypoint.sh`: runtime user setup, directory prep, SteamCMD home seeding, safe logging, backup/update/config/mod orchestration, signal handling.
 - `scripts/install-depotdownloader.sh`: build-time installer for pinned DepotDownloader release `DepotDownloader_3.4.0`.
-- `scripts/update-server.sh`: selected backend install/update for AppID `443030`, Linux platform request, timestamped backend logs, explicit `DOWNLOAD_BACKEND=auto` fallback, and native executable verification.
+- `scripts/update-server.sh`: selected backend install/update for AppID `443030`, Linux platform request, timestamped backend logs, DepotDownloader-first `DOWNLOAD_BACKEND=auto` fallback, and native executable verification.
 - `scripts/configure-server.sh`: persistent config/log directory linking and environment-driven config writes.
-- `scripts/update-mods.sh`: Workshop mod download/update, ordered modlist generation, removed-mod pruning.
+- `scripts/update-mods.sh`: selected Workshop backend download/update, ordered modlist generation, removed-mod pruning, and DepotDownloader-first `MOD_DOWNLOAD_BACKEND=auto` fallback.
 - `scripts/backup.sh`: timestamped archive creation and retention cleanup.
 - `scripts/start-server.sh`: native launcher/executable discovery and foreground server launch. The verified downloaded launcher is `ConanSandboxServer.sh`; fallback direct executable is `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
 - `scripts/healthcheck.sh`: server process healthcheck.
@@ -61,14 +61,18 @@ Local Docker Desktop paths:
 ## Current Runtime Assumptions
 
 - The local Codex host has public internet access but no LAN access; Rocky Linux and Unraid connectivity tests must not be attempted from this host.
-- SteamCMD remains the default backend variable, but Docker Engine `29.4.2` with builtin seccomp blocks Linux SteamCMD in this Docker Desktop environment.
+- DepotDownloader is the default server and Workshop mod download backend.
+- Docker Engine `29.4.2` with builtin seccomp blocks Linux SteamCMD in this Docker Desktop environment.
 - Windows host SteamCMD succeeds from `C:\Conan Exiles Server\DedicatedServerLauncher\steamcmd.exe`.
 - Docker `seccomp=unconfined` makes Linux SteamCMD login/app-info pass, proving the failure is Docker security-profile specific.
-- `docker-compose.steamcmd-unconfined.diagnostic.yml` exists only for diagnostic/emergency use. Prefer Docker Engine/Desktop upgrade or `DOWNLOAD_BACKEND=depotdownloader` for normal local work.
-- DepotDownloader is an explicit diagnostic/fallback backend. It is pinned to `DepotDownloader_3.4.0` and installed into the image at build time.
+- `docker-compose.steamcmd-unconfined.diagnostic.yml` exists only for diagnostic/emergency use. Prefer the default DepotDownloader backend or a Docker Engine/Desktop upgrade for normal local work.
+- DepotDownloader is pinned to `DepotDownloader_3.4.0` and installed into the image at build time.
 - `DOWNLOAD_BACKEND=steamcmd` uses only SteamCMD.
 - `DOWNLOAD_BACKEND=depotdownloader` uses only DepotDownloader.
-- `DOWNLOAD_BACKEND=auto` tries SteamCMD first and logs the SteamCMD failure path before trying DepotDownloader.
+- `DOWNLOAD_BACKEND=auto` tries DepotDownloader first and logs the failure path before trying SteamCMD.
+- `MOD_DOWNLOAD_BACKEND=steamcmd` uses only SteamCMD for Workshop mods.
+- `MOD_DOWNLOAD_BACKEND=depotdownloader` uses only DepotDownloader for Workshop mods.
+- `MOD_DOWNLOAD_BACKEND=auto` tries DepotDownloader first and logs the failure path before trying SteamCMD.
 - Native Linux server files are verified from a DepotDownloader AppID `443030` download on June 23, 2026.
 - Verified native launcher: `ConanSandboxServer.sh`.
 - Verified native executable: `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
@@ -76,9 +80,11 @@ Local Docker Desktop paths:
 - Workshop downloads use Steam Workshop app ID `440900`.
 - Active mod list is `ConanSandbox/Mods/modlist.txt`.
 - Single-mod Workshop download was verified under diagnostic `seccomp=unconfined` using public item `3720546346`; verified `.pak` file was `HEUnlimitedWeight.pak`.
+- DepotDownloader Workshop download was verified under Docker default security using public item `3720546346`; verified `.pak` file was `HEUnlimitedWeight.pak`.
+- Clean disposable compose e2e using the DepotDownloader defaults downloaded AppID `443030`, generated config, downloaded Workshop item `3720546346`, generated `ConanSandbox/Mods/modlist.txt`, reached `StartPlay`, stopped gracefully, restarted, preserved config/modlist, created backups, and removed large disposable server/cache folders after preserving proof logs.
 - Auto update loops are not active in MVP.
 
-Multi-mod ordering, pruning, backup interaction, live server mod loading, and full compose first boot must still be verified before MVP success is claimed.
+Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Linux, and Unraid still need later verification.
 
 ## Documentation
 

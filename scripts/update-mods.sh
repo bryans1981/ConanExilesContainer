@@ -23,6 +23,45 @@ download_mods() {
         return 0
     fi
 
+    local backend
+    local steamcmd_exit
+    local depotdownloader_exit
+
+    backend="$(mod_download_backend_value "${MOD_DOWNLOAD_BACKEND:-depotdownloader}")"
+    log "Selected Workshop mod download backend: ${backend}"
+
+    case "$backend" in
+        steamcmd)
+            download_mods_with_steamcmd "${mods[@]}"
+            ;;
+        depotdownloader)
+            download_mods_with_depotdownloader "${mods[@]}"
+            ;;
+        auto)
+            log "MOD_DOWNLOAD_BACKEND=auto: trying DepotDownloader first."
+            set +e
+            download_mods_with_depotdownloader "${mods[@]}"
+            depotdownloader_exit="$?"
+            set -e
+            if [[ "$depotdownloader_exit" -eq 0 ]]; then
+                log "MOD_DOWNLOAD_BACKEND=auto: DepotDownloader succeeded; SteamCMD fallback not used."
+                return 0
+            fi
+
+            log "MOD_DOWNLOAD_BACKEND=auto: DepotDownloader failed with exit_code=${depotdownloader_exit}. Trying SteamCMD fallback."
+            set +e
+            download_mods_with_steamcmd "${mods[@]}"
+            steamcmd_exit="$?"
+            set -e
+            if [[ "$steamcmd_exit" -ne 0 ]]; then
+                die "MOD_DOWNLOAD_BACKEND=auto failed. DepotDownloader exit_code=${depotdownloader_exit}; SteamCMD exit_code=${steamcmd_exit}."
+            fi
+            ;;
+    esac
+}
+
+download_mods_with_steamcmd() {
+    local mods=("$@")
     local cmd
     local steamcmd_mod_log
     local steamcmd_exit
@@ -56,6 +95,42 @@ download_mods() {
         log "ERROR: SteamCMD Workshop download failed: workshop_app_id=${WORKSHOP_APP_ID}, mod_count=${#mods[@]}, exit_code=${steamcmd_exit}, log=${steamcmd_mod_log}"
         return "$steamcmd_exit"
     fi
+
+    return 0
+}
+
+download_mods_with_depotdownloader() {
+    local mods=("$@")
+    local depotdownloader_mod_log
+    local depotdownloader_exit
+    local mod_id
+    local item_dir
+
+    require_executable "$DEPOTDOWNLOADER"
+    ensure_dir "${LOG_DIR}/depotdownloader"
+    depotdownloader_mod_log="${LOG_DIR}/depotdownloader/update-mods-${WORKSHOP_APP_ID}-$(timestamp).log"
+
+    log "Downloading/updating Workshop mods with DepotDownloader ${DEPOTDOWNLOADER_VERSION}: workshop_app_id=${WORKSHOP_APP_ID}, mod_count=${#mods[@]}, log=${depotdownloader_mod_log}"
+    : > "$depotdownloader_mod_log"
+
+    for mod_id in "${mods[@]}"; do
+        numeric_or_die "Workshop mod ID" "$mod_id"
+        item_dir="${STEAM_DIR}/steamapps/workshop/content/${WORKSHOP_APP_ID}/${mod_id}"
+        ensure_dir "$item_dir"
+        log "Downloading Workshop mod ${mod_id} with DepotDownloader to ${item_dir}."
+        {
+            printf '[%s] DepotDownloader Workshop mod %s start: app_id=%s, dir=%s\n' "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" "$mod_id" "$WORKSHOP_APP_ID" "$item_dir"
+            HOME="$STEAM_DIR" "$DEPOTDOWNLOADER" \
+                -app "$WORKSHOP_APP_ID" \
+                -pubfile "$mod_id" \
+                -dir "$item_dir"
+        } 2>&1 | tee -a "$depotdownloader_mod_log"
+        depotdownloader_exit="${PIPESTATUS[0]}"
+        if [[ "$depotdownloader_exit" -ne 0 ]]; then
+            log "ERROR: DepotDownloader Workshop download failed: workshop_app_id=${WORKSHOP_APP_ID}, mod_id=${mod_id}, exit_code=${depotdownloader_exit}, log=${depotdownloader_mod_log}"
+            return "$depotdownloader_exit"
+        fi
+    done
 
     return 0
 }
@@ -99,6 +174,7 @@ prune_removed_mods() {
     local mod_id
 
     if ! is_true "PRUNE_REMOVED_MODS" "${PRUNE_REMOVED_MODS:-true}"; then
+        printf '%s\n' "${active_mods[@]}" > "$active_file"
         log "Prune disabled; old downloaded mods will remain on disk."
         return 0
     fi

@@ -14,7 +14,8 @@ Rules for Codex and future agents:
 - Run local Docker Desktop testing before claiming MVP success.
 - Do not attempt LAN, Rocky Linux, or Unraid connectivity tests from the local Codex host. This environment has public internet access only and no LAN access by design.
 - When SteamCMD connectivity fails, compare host public internet, generic container internet/DNS, the project image, and the upstream SteamCMD image before changing app logic.
-- Keep SteamCMD as the default server download backend unless verified evidence and user approval justify changing the default. Alternate downloaders must be selected explicitly, logged clearly, and never used as a silent fallback.
+- DepotDownloader is the default server and Workshop mod download backend for this project because it has been verified under Docker Desktop default security for AppID `443030` and Workshop item `3720546346`. Keep SteamCMD available as an explicit backend for hosts where it works.
+- Alternate downloader fallbacks must be selected explicitly, logged clearly, and never used silently.
 - When Linux SteamCMD fails in Docker with `CreateBoundSocket` or `FAILED (No Connection)`, check Docker Engine version, security options, and seccomp behavior. Docker Engine `29.4.2` is a known bad candidate for SteamCMD because its builtin seccomp profile can block required socket behavior.
 - Treat `seccomp=unconfined` as diagnostic/emergency-only. Prefer upgrading Docker Engine/Desktop to a fixed version or using the verified DepotDownloader backend for normal testing.
 - Prefer small, testable changes.
@@ -34,8 +35,10 @@ Rules for Codex and future agents:
 Current implementation notes:
 
 - AppID `443030` is used for server install/update.
-- SteamCMD is the first install method, using the `steamcmd/steamcmd:ubuntu-24` base image.
-- `DOWNLOAD_BACKEND=steamcmd` is the default. `depotdownloader` and `auto` exist as controlled diagnostic/fallback options.
+- SteamCMD remains installed through the `steamcmd/steamcmd:ubuntu-24` base image, but it is not the default backend on this Docker Desktop host.
+- `DOWNLOAD_BACKEND=depotdownloader` is the default. `steamcmd` and `auto` exist as controlled explicit options.
+- `MOD_DOWNLOAD_BACKEND=depotdownloader` is the default. `steamcmd` and `auto` exist as controlled explicit options.
+- `auto` tries DepotDownloader first, then falls back to SteamCMD with explicit logging.
 - DepotDownloader is pinned to `DepotDownloader_3.4.0` from the official SteamRE GitHub release and installed into the image at build time.
 - The entrypoint seeds `/serverdata/steam` with the base image's bootstrapped SteamCMD home so SteamCMD can run as the configured non-root user.
 - The container explicitly requests Linux platform files from SteamCMD and fails if only Windows server executables are found.

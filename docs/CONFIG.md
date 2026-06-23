@@ -29,7 +29,7 @@ Passwords are never printed in logs. Logs only report whether each password is s
 | `RCON_PORT` | `25575` | `ServerSettings.ini` / `ServerSettings.RconPort` |
 | `RCON_PASSWORD` | empty | `ServerSettings.ini` / `ServerSettings.RconPassword` |
 
-These config paths are implementation targets and must be checked against the real AppID `443030` server files before the MVP is marked complete.
+These config paths were verified against real AppID `443030` Linux server files during the clean local Docker Desktop e2e run on June 23, 2026.
 
 ## Update Variables
 
@@ -37,17 +37,18 @@ These config paths are implementation targets and must be checked against the re
 | --- | --- | --- |
 | `UPDATE_SERVER_ON_START` | `true` | Runs the selected server download backend before launch. |
 | `VALIDATE_SERVER_FILES` | `false` | Adds validation when the selected backend supports it. |
-| `DOWNLOAD_BACKEND` | `steamcmd` | Server download backend. Supported values are `steamcmd`, `depotdownloader`, and `auto`. |
+| `DOWNLOAD_BACKEND` | `depotdownloader` | Server download backend. Supported values are `steamcmd`, `depotdownloader`, and `auto`. |
 | `AUTO_GAME_UPDATE` | `false` | Planned only; no background loop in MVP. |
 | `AUTO_GAME_UPDATE_INTERVAL_MINUTES` | `360` | Planned loop interval. |
 | `UPDATE_MODS_ON_START` | `true` | Downloads/updates Workshop mods before launch. |
+| `MOD_DOWNLOAD_BACKEND` | `depotdownloader` | Workshop mod download backend. Supported values are `steamcmd`, `depotdownloader`, and `auto`. |
 | `AUTO_MOD_UPDATE` | `false` | Planned only; no background loop in MVP. |
 
-`steamcmd` remains the default. `depotdownloader` uses the pinned image-installed DepotDownloader binary. `auto` tries SteamCMD first, logs the SteamCMD failure path, then tries DepotDownloader. It does not silently hide the first backend failure.
+`depotdownloader` is the default for server and Workshop downloads. It uses the pinned image-installed DepotDownloader binary. `steamcmd` remains available for hosts where Linux SteamCMD works. `auto` tries DepotDownloader first, logs any failure path, then tries SteamCMD. It does not silently hide the first backend failure.
 
-On Docker Engine `29.4.2`, local diagnostics show Linux SteamCMD is blocked by Docker's builtin seccomp profile. For normal local testing on that Docker version, use `DOWNLOAD_BACKEND=depotdownloader` or upgrade Docker Engine/Desktop to a fixed version. The `docker-compose.steamcmd-unconfined.diagnostic.yml` override exists only for diagnostics/emergency testing.
+On Docker Engine `29.4.2`, local diagnostics show Linux SteamCMD is blocked by Docker's builtin seccomp profile. Normal compose usage should keep the DepotDownloader defaults or upgrade Docker Engine/Desktop to a fixed version. The `docker-compose.steamcmd-unconfined.diagnostic.yml` override exists only for diagnostics/emergency testing.
 
-DepotDownloader support is currently for server AppID `443030` only. Workshop mods still use SteamCMD.
+DepotDownloader support is verified for server AppID `443030` and for Workshop item downloads through Steam Workshop app ID `440900`.
 
 ## Mod Variables
 

@@ -29,7 +29,7 @@ Current evidence points to a Docker Engine/Desktop `29.4.2` seccomp compatibilit
 
 Do not treat lack of LAN access as a SteamCMD blocker. This Codex host is intentionally public-internet-only.
 
-Do not claim a full fix or MVP success until AppID `443030` downloads successfully through the intended production path and the real server executable, paths, config files, launch behavior, Workshop handling, and modlist behavior are verified from actual downloaded files.
+The normal compose path now uses DepotDownloader for server and Workshop downloads by default, so it does not require `seccomp=unconfined`. Do not claim SteamCMD itself is fixed unless it passes again under Docker's default security profile.
 
 ## Docker Seccomp Findings
 
@@ -62,7 +62,7 @@ References:
 Preferred remediation:
 
 1. Upgrade Docker Engine/Desktop to a version containing the `29.4.3` seccomp compatibility fix when available for Docker Desktop.
-2. Use `DOWNLOAD_BACKEND=depotdownloader` for normal local testing until Docker is upgraded.
+2. Keep the default DepotDownloader backend for normal local testing until Docker is upgraded.
 3. Use `docker-compose.steamcmd-unconfined.diagnostic.yml` only as a diagnostic/emergency workaround.
 
 Diagnostic/emergency override:
@@ -73,15 +73,18 @@ docker compose -f docker-compose.yml -f docker-compose.steamcmd-unconfined.diagn
 
 This override is less secure than Docker's default isolation because it disables seccomp filtering for the Conan service. Do not make it the default.
 
-## DepotDownloader Comparison
+## DepotDownloader Default Path
 
-DepotDownloader was added as a controlled diagnostic/fallback backend, not as a silent replacement for SteamCMD. SteamCMD remains the default.
+DepotDownloader is the default server and Workshop mod download backend for this project because it has been verified under Docker default security on this host. SteamCMD remains available as an explicit backend for hosts where Linux SteamCMD works.
 
 Current backend values:
 
 - `DOWNLOAD_BACKEND=steamcmd`: use SteamCMD only.
 - `DOWNLOAD_BACKEND=depotdownloader`: use DepotDownloader only.
-- `DOWNLOAD_BACKEND=auto`: try SteamCMD first, log its failure path, then try DepotDownloader.
+- `DOWNLOAD_BACKEND=auto`: try DepotDownloader first, log its failure path, then try SteamCMD.
+- `MOD_DOWNLOAD_BACKEND=steamcmd`: use SteamCMD only for Workshop mods.
+- `MOD_DOWNLOAD_BACKEND=depotdownloader`: use DepotDownloader only for Workshop mods.
+- `MOD_DOWNLOAD_BACKEND=auto`: try DepotDownloader first, log its failure path, then try SteamCMD.
 
 Verified on June 23, 2026:
 
@@ -94,8 +97,11 @@ Verified on June 23, 2026:
 - Generated config path during launch probe: `ConanSandbox/Saved/Config/LinuxServer/`.
 - Server log path during launch probe: `ConanSandbox/Saved/Logs/ConanSandbox.log`.
 - The bounded launch probe reached `Game Engine Initialized`, loaded `ServerSettings.ini`, listened on port `7777`, and entered `StartPlay`.
+- DepotDownloader Workshop `-pubfile` download for item `3720546346` produced `HEUnlimitedWeight.pak`.
+- Integrated `MOD_DOWNLOAD_BACKEND=depotdownloader` generated `ConanSandbox/Mods/modlist.txt` in the requested order.
+- Clean disposable compose e2e using the DepotDownloader defaults downloaded server files, generated config, downloaded the Workshop mod, reached `StartPlay`, stopped gracefully, restarted, preserved config/modlist, and created backups.
 
-This proves AppID `443030` native Linux files are reachable through DepotDownloader from this environment. It does not prove that SteamCMD is fixed and does not prove Workshop mod behavior.
+This proves the default DepotDownloader path works from this environment for the tested server and single-mod flow. It does not prove that SteamCMD is fixed.
 
 ## Repeatable Diagnostics
 
@@ -159,7 +165,7 @@ By default, SteamCMD login/update failures are reported as inconclusive checks b
 - Check Docker Engine/Desktop version.
 - Check `docker info` security options and seccomp profile.
 - Compare Docker default seccomp against diagnostic `seccomp=unconfined`.
-- Compare with explicit `DOWNLOAD_BACKEND=depotdownloader` only when diagnosing SteamCMD-specific failures.
+- Compare with explicit `DOWNLOAD_BACKEND=steamcmd` only when diagnosing SteamCMD-specific failures because DepotDownloader is already the default path.
 - Try public DNS override checks with Docker `--dns 1.1.1.1` and `--dns 8.8.8.8`.
 - Try Docker Desktop host networking if it is available/enabled.
 - Retest on the Rocky Linux Docker host as a clean comparison later. Do not attempt Rocky Linux, Unraid, or LAN connectivity tests from the local Codex host.
@@ -169,6 +175,6 @@ By default, SteamCMD login/update failures are reported as inconclusive checks b
 - Do not switch to Wine as a workaround for this connectivity blocker.
 - Do not mark download, launch, update, mod, or MVP behavior as working without real AppID `443030` files.
 - Do not leave `seccomp=unconfined` enabled as a default production setting.
-- Do not make DepotDownloader the default without verified reason and explicit user approval.
-- Do not claim Workshop mod fallback support until real `.pak` layout, modlist order, and failure behavior are verified.
+- Do not change the default backend again without verified reason and explicit user approval.
+- Do not claim broad Workshop coverage until multi-mod ordering, removal, and pruning are verified with real mods.
 - Do not print tokens, passwords, or secrets in diagnostic output.

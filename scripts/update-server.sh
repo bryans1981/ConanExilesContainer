@@ -108,7 +108,7 @@ main() {
     local steamcmd_exit
     local depotdownloader_exit
 
-    backend="$(download_backend_value "${DOWNLOAD_BACKEND:-steamcmd}")"
+    backend="$(download_backend_value "${DOWNLOAD_BACKEND:-depotdownloader}")"
     ensure_dir "$SERVER_DIR"
     ensure_dir "$STEAM_DIR"
 
@@ -129,28 +129,28 @@ main() {
             verify_server_executable "DepotDownloader" "$DEPOTDOWNLOADER_UPDATE_LOG"
             ;;
         auto)
-            log "DOWNLOAD_BACKEND=auto: trying SteamCMD first."
-            set +e
-            run_steamcmd_update
-            steamcmd_exit="$?"
-            set -e
-            if [[ "$steamcmd_exit" -eq 0 ]]; then
-                log "DOWNLOAD_BACKEND=auto: SteamCMD succeeded; DepotDownloader fallback not used."
-                verify_server_executable "SteamCMD" "$STEAMCMD_UPDATE_LOG"
-                return 0
-            fi
-
-            log "DOWNLOAD_BACKEND=auto: SteamCMD failed with exit_code=${steamcmd_exit}, log=${STEAMCMD_UPDATE_LOG}. Trying DepotDownloader fallback."
+            log "DOWNLOAD_BACKEND=auto: trying DepotDownloader first."
             set +e
             run_depotdownloader_update
             depotdownloader_exit="$?"
             set -e
-            if [[ "$depotdownloader_exit" -ne 0 ]]; then
-                log "ERROR: DOWNLOAD_BACKEND=auto failed. SteamCMD exit_code=${steamcmd_exit}, log=${STEAMCMD_UPDATE_LOG}; DepotDownloader exit_code=${depotdownloader_exit}, log=${DEPOTDOWNLOADER_UPDATE_LOG}"
-                exit "$depotdownloader_exit"
+            if [[ "$depotdownloader_exit" -eq 0 ]]; then
+                log "DOWNLOAD_BACKEND=auto: DepotDownloader succeeded; SteamCMD fallback not used."
+                verify_server_executable "DepotDownloader" "$DEPOTDOWNLOADER_UPDATE_LOG"
+                return 0
             fi
 
-            verify_server_executable "DepotDownloader" "$DEPOTDOWNLOADER_UPDATE_LOG"
+            log "DOWNLOAD_BACKEND=auto: DepotDownloader failed with exit_code=${depotdownloader_exit}, log=${DEPOTDOWNLOADER_UPDATE_LOG}. Trying SteamCMD fallback."
+            set +e
+            run_steamcmd_update
+            steamcmd_exit="$?"
+            set -e
+            if [[ "$steamcmd_exit" -ne 0 ]]; then
+                log "ERROR: DOWNLOAD_BACKEND=auto failed. DepotDownloader exit_code=${depotdownloader_exit}, log=${DEPOTDOWNLOADER_UPDATE_LOG}; SteamCMD exit_code=${steamcmd_exit}, log=${STEAMCMD_UPDATE_LOG}"
+                exit "$steamcmd_exit"
+            fi
+
+            verify_server_executable "SteamCMD" "$STEAMCMD_UPDATE_LOG"
             ;;
     esac
 }

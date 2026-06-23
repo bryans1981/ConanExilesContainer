@@ -6,28 +6,57 @@
 - Remote name: `origin`
 - Remote URL: `https://github.com/bryans1981/ConanExilesContainer.git`
 - GitHub visibility: private
-- Latest pushed commit before this pass: `877ebcc Add DepotDownloader backend diagnostics`
-- Previous pushed commit: `af3b08c Add SteamCMD diagnostics and local host network clarification`
+- Latest pushed commit at start of this pass: `a1b9a5d Diagnose Docker SteamCMD security profile issue`
+- Previous pushed commit: `877ebcc Add DepotDownloader backend diagnostics`
 - Initial scaffold commit: `9ae5a6f Initial Conan Exiles container scaffold`
+- Commit planned for this pass: `Finalize safe downloader backend defaults`
 - GitHub automation blockers: none currently. `gh` is unavailable, but authenticated git/Git Credential Manager/API paths have worked for this repository.
-- Commit planned for this pass: `Diagnose Docker SteamCMD security profile issue`
 
 ## Current Status
 
-Initial MVP scaffold is complete and locally validated as far as possible. DepotDownloader remains the recommended normal backend for this Docker Desktop host because Docker Engine `29.4.2` blocks Linux SteamCMD under the default builtin seccomp profile.
+The local Docker Desktop default-flow MVP smoke test passed on June 23, 2026.
 
-SteamCMD is not broken on the Windows host. Windows SteamCMD works from `C:\Conan Exiles Server\DedicatedServerLauncher\steamcmd.exe`. Linux SteamCMD works in Docker when run with diagnostic `seccomp=unconfined`. This proves the local failure is Docker security-profile specific, not a general Steam outage or host internet issue.
+Normal compose defaults are now:
 
-Full MVP success is still not claimed. Server files, launch path, and config behavior are verified through DepotDownloader and a bounded launch probe, and single-mod download/modlist generation are verified under diagnostic `seccomp=unconfined`; live server mod loading, multi-mod behavior, pruning, backups with mods, and full first boot remain unverified.
+- `DOWNLOAD_BACKEND=depotdownloader`
+- `MOD_DOWNLOAD_BACKEND=depotdownloader`
 
-## Environment Clarification
+The clean disposable e2e run used those defaults and proved:
 
-- The Codex host has public internet access.
-- The Codex host has no LAN access by design.
-- LAN, Rocky Linux, and Unraid connectivity tests are not valid from this environment.
-- Docker Desktop diagnostics from this host should focus on public internet, container networking/DNS, firewall/security filtering, proxy/VPN behavior, and SteamCMD/Steam protocol behavior inside containers.
+- AppID `443030` server download through DepotDownloader.
+- Native launcher `ConanSandboxServer.sh`.
+- Native executable `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
+- Config generation under `ConanSandbox/Saved/Config/LinuxServer/`.
+- Server name, test server/admin/RCON passwords, max players, and ports applied.
+- Test password values did not appear in retained Docker/server logs.
+- Workshop item `3720546346` downloaded through DepotDownloader.
+- Verified `.pak`: `HEUnlimitedWeight.pak`.
+- `ConanSandbox/Mods/modlist.txt` generated with the expected absolute `.pak` path.
+- Active mod order state written to `ConanSandbox/Mods/.active-workshop-mods`.
+- Server reached `StartPlay`.
+- Graceful shutdown marker observed.
+- Restart reached `StartPlay` and did not wipe config/modlist.
+- Backup archives were created.
 
-## Docker/Seccomp Findings
+Remaining work is no longer a blocker for the local single-mod MVP smoke flow, but should still be tested later:
+
+- Multi-mod ordering with more than one real mod.
+- Removing mod IDs and pruning old downloads.
+- Longer-running public server behavior.
+- Rocky Linux and Unraid deployment from those hosts.
+
+## SteamCMD Blocker Status
+
+SteamCMD is still blocked under Docker Desktop default security on this host.
+
+Known facts:
+
+- Windows host SteamCMD works from `C:\Conan Exiles Server\DedicatedServerLauncher\steamcmd.exe`.
+- Linux SteamCMD fails under Docker Engine `29.4.2` builtin seccomp in both the project image and upstream `steamcmd/steamcmd:ubuntu-24`.
+- Failure signature includes `CreateBoundSocket: failed to create socket, error [no name available] (38)` and `FAILED (No Connection)`.
+- Linux SteamCMD passes when run with diagnostic `seccomp=unconfined`.
+- This remains a Docker Engine/Desktop `29.4.2` seccomp compatibility issue, not a general host internet, Docker DNS, AppID, or project app-logic failure.
+- `docker-compose.steamcmd-unconfined.diagnostic.yml` remains diagnostic/emergency-only and is not part of the normal compose path.
 
 Captured Docker environment:
 
@@ -39,139 +68,131 @@ Captured Docker environment:
 - Kernel: `6.6.87.2-microsoft-standard-WSL2`
 - Security options: `seccomp`, profile `builtin`
 
-Evidence:
-
-- Windows host SteamCMD version/login/app-info: pass.
-- Upstream `steamcmd/steamcmd:ubuntu-24` with default builtin seccomp: fail/inconclusive with `CreateBoundSocket: failed to create socket, error [no name available] (38)` and `FAILED (No Connection)`.
-- Upstream `steamcmd/steamcmd:ubuntu-24` with `--security-opt seccomp=unconfined`: pass for anonymous login and AppID `443030` app-info.
-- Project image with default builtin seccomp: fail/inconclusive.
-- Project image with `--security-opt seccomp=unconfined`: pass for anonymous login.
-- Compose override with `security_opt: seccomp=unconfined`: config renders and AppID `443030` app-info passes.
-
-Docker Engine 29 release notes document that `29.4.2` blocks `AF_ALG` sockets and `socketcall(2)` in the default seccomp profile and lists SteamCMD as affected. Docker `29.4.3` release notes document replacing the broad `socketcall` deny with targeted LSM controls.
-
-References:
-
-- `https://docs.docker.com/engine/release-notes/29/#2942`
-- `https://docs.docker.com/engine/release-notes/29/#2943`
-
-Recommended action:
-
-1. Upgrade Docker Engine/Desktop to a release containing the `29.4.3` seccomp compatibility fix when available.
-2. Use `DOWNLOAD_BACKEND=depotdownloader` for normal local server-file testing on Docker Engine `29.4.2`.
-3. Use `docker-compose.steamcmd-unconfined.diagnostic.yml` only as a diagnostic/emergency workaround because it disables Docker seccomp filtering for the Conan service.
-
 ## Work Performed This Pass
 
-- Added `tests/windows-steamcmd-comparison.ps1`.
-- Added `tests/steamcmd-security-diagnostics.ps1`.
-- Added `tests/steamcmd-security-diagnostics.sh`.
-- Added `docker-compose.steamcmd-unconfined.diagnostic.yml`.
-- Updated `scripts/update-mods.sh` to capture SteamCMD Workshop output in timestamped logs under `/serverdata/logs/steamcmd/`.
-- Updated `AGENTS.md`, `PROJECT.md`, `PROJECT_MAP.md`, `README.md`, `docs/CONFIG.md`, `docs/LOCAL_DOCKER_DESKTOP.md`, `docs/MODS.md`, `docs/TROUBLESHOOTING_STEAMCMD.md`, and this handoff.
+- Verified direct DepotDownloader Workshop `-pubfile` download for item `3720546346` under Docker default security.
+- Implemented `MOD_DOWNLOAD_BACKEND=steamcmd|depotdownloader|auto`.
+- Changed default server backend to `depotdownloader`.
+- Changed default Workshop mod backend to `depotdownloader`.
+- Changed server and mod `auto` modes to try DepotDownloader first, then SteamCMD with explicit logging.
+- Kept SteamCMD as an explicit backend for hosts where it works.
+- Kept `docker-compose.steamcmd-unconfined.diagnostic.yml` diagnostic/emergency-only.
+- Fixed SteamCMD connectivity diagnostics so their project app-update path explicitly sets `DOWNLOAD_BACKEND=steamcmd`.
+- Ran clean disposable compose e2e with the DepotDownloader defaults.
+- Updated `AGENTS.md`, `PROJECT.md`, `PROJECT_MAP.md`, `README.md`, `.env.example`, `docs/CONFIG.md`, `docs/MODS.md`, `docs/TROUBLESHOOTING_STEAMCMD.md`, `docs/LOCAL_DOCKER_DESKTOP.md`, and this handoff.
 
 ## Diagnostic Results This Pass
 
-Windows host SteamCMD comparison:
+DepotDownloader diagnostics:
 
-- Log root: `test-results/windows-steamcmd-comparison/20260623T215056Z-9520/`
-- SteamCMD path: `C:\Conan Exiles Server\DedicatedServerLauncher\steamcmd.exe`
-- `windows-steamcmd-version`: pass
-- `windows-steamcmd-login`: pass
-- `windows-steamcmd-app-info`: pass
-- Optional app-update probe: skipped by default
-- `FailureCount=0`
+- Command: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\depotdownloader-connectivity.ps1 -SkipAppUpdateAttempt`
+- Log root: `test-results/depotdownloader-connectivity/20260623T231504Z-14148/`
+- Host DNS/release HTTPS: pass.
+- Docker version: pass.
+- Container release HTTPS: pass.
+- Project image present: pass.
+- Image DepotDownloader version: pass.
+- AppID `443030` manifest-only access: pass.
+- Project app update: skipped to avoid a redundant multi-GB download; full e2e covered the default app download.
+- `FailureCount=0`, `DepotDownloaderFailureCount=0`, `InconclusiveCount=1`.
 
-SteamCMD Docker security diagnostics:
+SteamCMD connectivity diagnostics:
 
-- PowerShell log root: `test-results/steamcmd-security-diagnostics/20260623T215056Z-14712/`
-- Bash log root: `test-results/steamcmd-security-diagnostics/20260623T215056Z-1235/`
-- Docker info/version/context capture: pass
-- Docker Desktop CLI plugin version capture: pass
-- Upstream default login: inconclusive/fail
-- Upstream `seccomp=unconfined` login: pass
-- Upstream default app-info: inconclusive/fail
-- Upstream `seccomp=unconfined` app-info: pass
-- Project default login: inconclusive/fail
-- Project `seccomp=unconfined` login: pass
-- Host-network check: skipped in the final run
-- Custom seccomp profile: not added because no narrow profile was verified. A scratch test using Docker's `seccomp/v0.2.1` profile downloaded/started SteamCMD but remained inconclusive after repeated Steam login retries, so it was not committed as `docker/seccomp/steamcmd-diagnostic.json`.
+- Command: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\steamcmd-connectivity.ps1 -SkipDnsOverride -SkipAppUpdateAttempt -SkipHostNetwork`
+- Log root: `test-results/steamcmd-connectivity/20260623T231504Z-15108/`
+- Host DNS/HTTPS: pass.
+- Docker version: pass.
+- Container DNS/HTTPS/package repository: pass.
+- Project image present: pass.
+- Project SteamCMD login/app-info: inconclusive/fail under default seccomp.
+- Upstream SteamCMD login/app-info: inconclusive/fail under default seccomp.
+- Project app update: skipped to avoid writing to normal compose data during a known failing SteamCMD path.
+- `FailureCount=0`, `SteamFailureCount=4`, `InconclusiveCount=5`.
 
-Workshop mod diagnostics:
+SteamCMD security diagnostics:
 
+- Command: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\steamcmd-security-diagnostics.ps1 -SkipHostNetwork`
+- Log root: `test-results/steamcmd-security-diagnostics/20260623T231504Z-6368/`
+- Docker version/info/context/Desktop version: pass.
+- Upstream default login/app-info: inconclusive/fail.
+- Upstream `seccomp=unconfined` login/app-info: pass.
+- Project default login: inconclusive/fail.
+- Project `seccomp=unconfined` login: pass.
+- Custom seccomp profile: skipped because no verified narrow profile exists.
+- Host network: skipped by flag.
+- `FailureCount=0`, `SteamFailureCount=3`, `InconclusiveCount=5`.
+
+Workshop mod backend diagnostics:
+
+- Direct DepotDownloader proof root: `test-results/workshop-mod-diagnostics/20260623T230717Z-2348-depotdownloader-default/`
+- Integrated project proof root: `test-results/workshop-mod-diagnostics/20260623T231351Z-project-depotdownloader-default/`
+- Prune-disabled proof root: `test-results/workshop-mod-diagnostics/20260623T234858Z-project-depotdownloader-prune-disabled/`
 - Test item: `3720546346` (`[Enhanced] Unlimited Weight`)
-- Steam API reported size: `312179` bytes
-- PowerShell SteamCMD/unconfined proof log root: `test-results/workshop-mod-diagnostics/20260623T222112Z-3376-project-steamcmd-logged/`
-- SteamCMD with diagnostic `seccomp=unconfined`: pass
-- Timestamped SteamCMD mod log was written under the diagnostic `/diagnostics/logs/steamcmd/` path.
-- Verified `.pak`: `steamapps/workshop/content/440900/3720546346/HEUnlimitedWeight.pak`
+- Backend: `MOD_DOWNLOAD_BACKEND=depotdownloader`
+- Docker security: default, no `seccomp=unconfined`
+- Verified `.pak`: `HEUnlimitedWeight.pak`
 - Generated modlist: `ConanSandbox/Mods/modlist.txt`
-- Generated modlist line: `/diagnostics/steam/steamapps/workshop/content/440900/3720546346/HEUnlimitedWeight.pak`
-- Active mod file: `ConanSandbox/Mods/.active-workshop-mods`
+- Active mod state: `ConanSandbox/Mods/.active-workshop-mods`
+- `PRUNE_REMOVED_MODS=false` still refreshes active mod state while leaving old downloads on disk.
+- Result: pass.
 
-DepotDownloader Workshop pubfile status:
+Clean e2e proof:
 
-- Direct full `DepotDownloader -app 440900 -pubfile 3720546346` succeeded once and produced `HEUnlimitedWeight.pak`.
-- Immediate integrated/retry attempts failed to connect to Steam after 10 tries.
-- `MOD_DOWNLOAD_BACKEND` was not implemented because the DepotDownloader Workshop path was not stable enough to promote.
+- Proof root: `test-results/e2e/20260623T233043Z-depotdownloader-default/proof/`
+- Temporary project: `conane2e20260623233043`
+- Commands:
+  - `docker compose -p conane2e20260623233043 -f docker-compose.yml -f test-results/e2e/20260623T233043Z-depotdownloader-default/compose.e2e.yml config --quiet`
+  - `docker compose -p conane2e20260623233043 -f docker-compose.yml -f test-results/e2e/20260623T233043Z-depotdownloader-default/compose.e2e.yml up -d --force-recreate --remove-orphans conan`
+  - `docker compose -p conane2e20260623233043 -f docker-compose.yml -f test-results/e2e/20260623T233043Z-depotdownloader-default/compose.e2e.yml stop -t 90 conan`
+  - `docker compose -p conane2e20260623233043 -f docker-compose.yml -f test-results/e2e/20260623T233043Z-depotdownloader-default/compose.e2e.yml up -d conan`
+  - `docker compose -p conane2e20260623233043 -f docker-compose.yml -f test-results/e2e/20260623T233043Z-depotdownloader-default/compose.e2e.yml down --remove-orphans`
+- First boot reached `StartPlay`: pass.
+- Restart reached `StartPlay`: pass.
+- Graceful shutdown marker: pass.
+- Config/modlist persistence: pass.
+- Backup archive creation: pass.
+- Password value retained-log scan: pass.
+- Large disposable `serverfiles` and `steam` folders were removed after proof capture.
 
-Previously verified DepotDownloader server results:
+## Validation Commands This Pass
 
-- `DOWNLOAD_BACKEND=depotdownloader` downloaded AppID `443030`.
-- Verified launcher: `ConanSandboxServer.sh`
-- Verified executable: `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`
-- Bounded launch/config probe reached `StartPlay`.
-
-## Final Validation This Pass
-
-- `git status`, branch, remote, and log checked at start; worktree was clean against `origin/main`.
-- `docker compose config`: passed.
-- `docker compose -f docker-compose.yml -f docker-compose.steamcmd-unconfined.diagnostic.yml config`: passed.
-- Bash syntax checks for scripts and diagnostics in `ubuntu:24.04`: passed.
-- PowerShell parser checks for all PowerShell diagnostics: passed.
-- `git diff --check`: passed; only expected CRLF warnings were reported.
-- `docker compose build`: passed after final script changes.
-- `tests/windows-steamcmd-comparison.ps1`: passed as above.
-- `tests/steamcmd-security-diagnostics.ps1 -SkipHostNetwork`: passed as a diagnostic run with expected SteamCMD failures under default seccomp and passes under unconfined.
-- `tests/steamcmd-security-diagnostics.sh --skip-host-network`: passed as a diagnostic run with matching results.
-- Existing PowerShell SteamCMD connectivity diagnostics were rerun with `-SkipDnsOverride -SkipAppUpdateAttempt -SkipHostNetwork`.
-  - Log root: `test-results/steamcmd-connectivity/20260623T222549Z-14408/`
-  - Host DNS/HTTPS, Docker, container DNS/HTTPS, and package repository checks: pass
-  - Project image SteamCMD login/app-info: inconclusive/fail under default seccomp
-  - Upstream SteamCMD login/app-info: inconclusive/fail under default seccomp
-  - `FailureCount=0`, `InconclusiveCount=5`, `SteamFailureCount=4`
-- PowerShell DepotDownloader diagnostics were rerun with `-SkipAppUpdateAttempt`.
-  - Log root: `test-results/depotdownloader-connectivity/20260623T223751Z-4888/`
-  - Host DNS/release HTTPS, Docker, container release HTTPS, project image, DepotDownloader version, and AppID `443030` manifest-only checks: pass
-  - Full project app update was skipped to avoid another 4 GB download
-  - `FailureCount=0`, `DepotDownloaderFailureCount=0`, `InconclusiveCount=1`
-  - Prior successful full server download remains under `test-results/depotdownloader-connectivity/20260623T203026Z/`.
+- `git status --short --branch`
+- `git branch --show-current`
+- `git remote -v`
+- `git log --oneline -5`
+- `docker compose config --quiet`
+- `docker compose -f docker-compose.yml config --quiet`
+- `docker compose -f docker-compose.yml -f docker-compose.steamcmd-unconfined.diagnostic.yml config --quiet`
+- `docker run --rm -v "${PWD}:/work" -w /work ubuntu:24.04 bash -n scripts/common.sh scripts/update-server.sh scripts/update-mods.sh scripts/entrypoint.sh scripts/configure-server.sh scripts/backup.sh scripts/start-server.sh scripts/healthcheck.sh tests/steamcmd-security-diagnostics.sh tests/steamcmd-connectivity.sh tests/depotdownloader-connectivity.sh`
+- PowerShell parser check for all `tests/*.ps1`.
+- `git diff --check`
+- `docker compose build`
+- DepotDownloader diagnostics, SteamCMD connectivity diagnostics, SteamCMD security diagnostics, integrated Workshop backend tests, and clean e2e compose run listed above.
 
 ## Cleanup Status
 
-- Removed disposable bulk SteamCMD cache/home data from Workshop diagnostic roots after preserving proof logs, generated modlist files, and the small downloaded `.pak`.
-- Removed previous disposable DepotDownloader server bulk data in the prior pass; proof logs remain.
-- Ran `docker compose down --remove-orphans`; compose network was removed and no compose services remain running.
-- Local ignored `data/` and `test-results/` remain intentionally untracked/ignored.
-- The compose override diagnostic touched ignored local `data/steam` during AppID app-info testing; it was retained rather than deleted to avoid removing possible user/runtime data.
+- Removed failed harness-only scratch root: `test-results/workshop-mod-diagnostics/20260623T231328Z-project-depotdownloader-default/`.
+- Removed failed harness-only scratch root: `test-results/e2e/20260623T232907Z-depotdownloader-default/`.
+- Removed large disposable e2e `serverfiles` and `steam` folders from `test-results/e2e/20260623T233043Z-depotdownloader-default/` after preserving proof logs.
+- Kept proof roots and diagnostic logs under ignored `test-results/`.
+- No e2e compose containers remain after `docker compose down --remove-orphans`.
+- Ignored local `data/` was not deleted because it may contain user/runtime data.
 
 ## Next Recommended Steps
 
-1. Upgrade Docker Engine/Desktop to a release with the `29.4.3` seccomp compatibility fix, then rerun `tests/steamcmd-security-diagnostics.ps1`.
-2. Until Docker is upgraded, use `DOWNLOAD_BACKEND=depotdownloader` for normal local server-file testing.
-3. Use `docker-compose.steamcmd-unconfined.diagnostic.yml` only when intentionally testing SteamCMD or Workshop mods on Docker Engine `29.4.2`.
-4. Run a full compose first boot with `DOWNLOAD_BACKEND=depotdownloader`.
-5. Verify live server mod loading using the downloaded `HEUnlimitedWeight.pak` or another small public mod.
-6. Verify multi-mod ordering, pruning, backup behavior with mods, graceful shutdown, and restart persistence before claiming MVP success.
-7. Run Rocky Linux testing from the Rocky Linux host itself, not from this Codex host.
+1. Commit and push this pass as `Finalize safe downloader backend defaults`.
+2. Test multi-mod ordering with two or more real Conan Workshop mods.
+3. Test removing a mod ID and `PRUNE_REMOVED_MODS=true` behavior.
+4. Upgrade Docker Engine/Desktop to a release containing the `29.4.3` seccomp compatibility fix when available, then rerun `tests/steamcmd-security-diagnostics.ps1`.
+5. Run Rocky Linux and Unraid testing from those hosts, not from this local Codex host.
 
 ## Important Decisions
 
 - Use native Linux dedicated server files.
 - Do not switch to Wine.
-- Keep SteamCMD as the default variable value, but recommend DepotDownloader for Docker Engine `29.4.2` local testing.
+- DepotDownloader is the default server and Workshop download backend for this project.
+- SteamCMD remains available as an explicit backend for hosts where it works.
 - Keep `seccomp=unconfined` diagnostic/emergency-only.
 - Do not commit a custom seccomp profile until a narrow profile is verified locally.
-- Do not implement `MOD_DOWNLOAD_BACKEND` until the DepotDownloader Workshop path is stable.
 - Do not print tokens, passwords, or secrets.
 - Keep GitHub repository work automation-first and private by default.

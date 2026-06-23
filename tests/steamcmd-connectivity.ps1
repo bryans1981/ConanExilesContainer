@@ -178,8 +178,8 @@ try {
         } -AllowInconclusive -SteamCheck
 
         if (-not $SkipAppUpdateAttempt) {
-            Invoke-DiagnosticCheck 'steamcmd-project-app-update' 'Try the project update script for AppID 443030 with a 300 second timeout.' {
-                docker compose run --rm -v $volumeArg conan timeout 300s gosu conan env HOME=/serverdata/steam /scripts/update-server.sh
+            Invoke-DiagnosticCheck 'steamcmd-project-app-update' 'Try the project update script for AppID 443030 with DOWNLOAD_BACKEND=steamcmd and a 300 second timeout.' {
+                docker compose run --rm -v $volumeArg -e DOWNLOAD_BACKEND=steamcmd conan timeout 300s gosu conan env HOME=/serverdata/steam /scripts/update-server.sh
             } -AllowInconclusive -SteamCheck
         } else {
             Add-Skip 'steamcmd-project-app-update' 'Skipped by -SkipAppUpdateAttempt.'

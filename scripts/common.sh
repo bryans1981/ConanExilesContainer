@@ -10,7 +10,8 @@ CONFIG_DIR="${CONFIG_DIR:-/serverdata/config}"
 LOG_DIR="${LOG_DIR:-/serverdata/logs}"
 BACKUP_LOCATION="${BACKUP_LOCATION:-/serverdata/backups}"
 STEAMCMD="${STEAMCMD:-steamcmd}"
-DOWNLOAD_BACKEND="${DOWNLOAD_BACKEND:-steamcmd}"
+DOWNLOAD_BACKEND="${DOWNLOAD_BACKEND:-depotdownloader}"
+MOD_DOWNLOAD_BACKEND="${MOD_DOWNLOAD_BACKEND:-depotdownloader}"
 DEPOTDOWNLOADER="${DEPOTDOWNLOADER:-/opt/depotdownloader/DepotDownloader}"
 DEPOTDOWNLOADER_VERSION="${DEPOTDOWNLOADER_VERSION:-DepotDownloader_3.4.0}"
 SERVER_PID_FILE="${SERVER_PID_FILE:-/tmp/conan-server.pid}"
@@ -126,7 +127,7 @@ server_install_exists() {
 }
 
 download_backend_value() {
-    local value="${1:-steamcmd}"
+    local value="${1:-depotdownloader}"
 
     case "$(to_lower "$value")" in
         steamcmd)
@@ -140,6 +141,25 @@ download_backend_value() {
             ;;
         *)
             die "Invalid DOWNLOAD_BACKEND: '${value}'. Use steamcmd, depotdownloader, or auto."
+            ;;
+    esac
+}
+
+mod_download_backend_value() {
+    local value="${1:-depotdownloader}"
+
+    case "$(to_lower "$value")" in
+        steamcmd)
+            printf 'steamcmd'
+            ;;
+        depotdownloader)
+            printf 'depotdownloader'
+            ;;
+        auto)
+            printf 'auto'
+            ;;
+        *)
+            die "Invalid MOD_DOWNLOAD_BACKEND: '${value}'. Use steamcmd, depotdownloader, or auto."
             ;;
     esac
 }

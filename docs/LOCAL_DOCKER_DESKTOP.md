@@ -62,10 +62,12 @@ docker compose down
 - Linux SteamCMD under Docker default builtin seccomp fails with `CreateBoundSocket: failed to create socket, error [no name available] (38)` and `FAILED (No Connection)`.
 - Linux SteamCMD under Docker diagnostic `seccomp=unconfined` succeeds for anonymous login and AppID `443030` app-info checks.
 - `docker-compose.steamcmd-unconfined.diagnostic.yml` is available only as a diagnostic/emergency workaround and is less secure than default Docker isolation.
-- Full first boot through the default SteamCMD backend is blocked on Docker Engine `29.4.2` until Docker is upgraded or a safe seccomp profile is verified.
-- Normal local server-file testing should use `DOWNLOAD_BACKEND=depotdownloader` on this Docker version.
-- Single-mod Workshop download and project modlist generation were verified under diagnostic `seccomp=unconfined` using item `3720546346`.
-- Full live Workshop mod loading remains unverified.
+- The normal compose default is now `DOWNLOAD_BACKEND=depotdownloader` and `MOD_DOWNLOAD_BACKEND=depotdownloader`.
+- Full first boot through SteamCMD remains blocked on Docker Engine `29.4.2` until Docker is upgraded or a safe seccomp profile is verified.
+- Single-mod Workshop download and project modlist generation were verified under Docker default security using DepotDownloader item `3720546346`.
+- Single-mod Workshop download and project modlist generation were also verified under diagnostic `seccomp=unconfined` using SteamCMD item `3720546346`.
+- Clean disposable compose e2e with DepotDownloader defaults passed: server download, config generation, test password application without retained-log leaks, Workshop mod download, modlist generation, `StartPlay`, graceful shutdown, restart persistence, and backup creation.
+- Remaining local checks: multi-mod ordering, mod removal/pruning, and longer-running server behavior.
 
 External metadata checked June 23, 2026:
 

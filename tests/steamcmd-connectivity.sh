@@ -182,8 +182,8 @@ if [[ "$PROJECT_IMAGE_AVAILABLE" == "true" ]]; then
         docker compose run --rm -v "$volume_arg" conan timeout 240s gosu conan env HOME=/serverdata/steam steamcmd +@ShutdownOnFailedCommand 1 +@NoPromptForPassword 1 +login anonymous +app_info_print "$APP_ID" +quit
 
     if [[ "$SKIP_APP_UPDATE_ATTEMPT" != "true" ]]; then
-        run_check "steamcmd-project-app-update" "Try the project update script for AppID 443030 with a 300 second timeout." "true" "true" \
-            docker compose run --rm -v "$volume_arg" conan timeout 300s gosu conan env HOME=/serverdata/steam /scripts/update-server.sh
+        run_check "steamcmd-project-app-update" "Try the project update script for AppID 443030 with DOWNLOAD_BACKEND=steamcmd and a 300 second timeout." "true" "true" \
+            docker compose run --rm -v "$volume_arg" -e DOWNLOAD_BACKEND=steamcmd conan timeout 300s gosu conan env HOME=/serverdata/steam /scripts/update-server.sh
     else
         add_skip "steamcmd-project-app-update" "Skipped by --skip-app-update-attempt."
     fi
