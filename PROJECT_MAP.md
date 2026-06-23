@@ -4,10 +4,10 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 
 ## Repository Layout
 
-- `AGENTS.md`: project-specific working rules for Codex/agents.
-- `PROJECT.md`: project goal, scope, MVP definition, environment variables, ports, volumes, and decisions.
+- `AGENTS.md`: project-specific working rules for Codex/agents, including GitHub automation rules.
+- `PROJECT.md`: project goal, scope, MVP definition, repository identity, visibility, environment variables, ports, volumes, and decisions.
 - `PROJECT_MAP.md`: routing/index document for the repository.
-- `SESSION_HANDOFF.md`: continuity notes, latest status, tests, blockers, and next steps.
+- `SESSION_HANDOFF.md`: continuity notes, latest status, latest push/remote status, tests, blockers, and next steps.
 - `Dockerfile`: Ubuntu-based image with SteamCMD, runtime dependencies, scripts, exposed ports, and healthcheck.
 - `docker-compose.yml`: local Docker Desktop compose service with required volume and port mappings.
 - `.env.example`: complete environment variable template.
@@ -68,3 +68,9 @@ All assumptions above must be verified by local Docker Desktop testing before MV
 - `docs/LOCAL_DOCKER_DESKTOP.md`: local test procedure and current status.
 - `docs/ROCKY_LINUX.md`: Rocky Linux deployment/test notes.
 - `docs/WEBGUI_PHASE_2.md`: future WebGUI design.
+
+## Git And GitHub Workflow
+
+- `AGENTS.md`: permanent automation-first GitHub rules for agents.
+- `PROJECT.md`: repository name, expected owner/remote, and private visibility expectation.
+- `SESSION_HANDOFF.md`: latest branch, commit, remote URL, repo creation status, push status, and any GitHub automation blockers.

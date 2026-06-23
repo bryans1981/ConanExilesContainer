@@ -4,6 +4,14 @@
 
 Create a simple Docker container project for running a Conan Exiles Enhanced dedicated server using native Linux dedicated server software where possible. The container should automatically download, install, update, configure, and start the server so a user only needs Docker, mapped volumes, required ports, and environment variables.
 
+## Repository
+
+- Repo name: `ConanExilesContainer`
+- Default visibility: private
+- Expected remote: `https://github.com/bryans1981/ConanExilesContainer`
+- GitHub creation, remote setup, commit, and push should be automated when authenticated access exists.
+- Do not make the repository public unless the user explicitly approves public visibility.
+
 ## Development Target Order
 
 1. Docker Desktop local

@@ -16,6 +16,16 @@ Rules for Codex and future agents:
 - Keep the image generic and portable. Do not hardcode host-specific paths.
 - Update `SESSION_HANDOFF.md` before stopping work.
 
+## GitHub Automation
+
+- When the user asks to create a project/repo, commit, push, or publish work, first attempt automated GitHub repo creation, remote setup, commit, and push using available authenticated tooling.
+- Do not default to manual GitHub instructions.
+- Use private repositories by default unless the user explicitly approves public visibility.
+- Detect the intended GitHub owner from authenticated `gh`, git, Git Credential Manager, or connector context when possible. If no owner can be safely detected for this project, use `bryans1981`.
+- Do not print tokens or secrets.
+- If `gh` is unavailable, check normal git remotes, Git Credential Manager, and any available authenticated GitHub connector/API path before falling back to manual instructions.
+- If automation fails, document the exact blocker, commands or methods attempted, and safest next manual step in `SESSION_HANDOFF.md`.
+
 Current implementation notes:
 
 - AppID `443030` is used for server install/update.

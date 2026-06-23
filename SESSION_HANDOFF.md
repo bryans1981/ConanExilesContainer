@@ -2,7 +2,18 @@
 
 ## Current Status
 
-Initial MVP scaffold is complete and locally validated as far as possible without Steam anonymous login. Docker Desktop is available on the local host. GitHub CLI is not installed, so the GitHub repository has not been created from this session. The local repository is initialized with git.
+Initial MVP scaffold is complete and locally validated as far as possible without Steam anonymous login. Docker Desktop is available on the local host. The private GitHub repository has been created and the initial scaffold commit has been pushed to `origin/main`.
+
+Current Git/GitHub state:
+
+- Current branch: `main`
+- Current pushed scaffold commit before this documentation update: `9ae5a6f`
+- Remote URL: `https://github.com/bryans1981/ConanExilesContainer.git`
+- Remote name: `origin`
+- Repo creation: succeeded through GitHub REST API using Git Credential Manager credentials after `gh` was confirmed unavailable.
+- Initial push: succeeded with `git push -u origin main`.
+- GitHub visibility: private.
+- Local git author config: `bryans1981 <bryans1981@users.noreply.github.com>`.
 
 ## Completed
 
@@ -14,6 +25,9 @@ Initial MVP scaffold is complete and locally validated as far as possible withou
 - Implemented runtime `PUID`/`PGID`, persistent directories, config/log linking, backups, mod downloads, modlist generation, and healthcheck.
 - Marked `AUTO_GAME_UPDATE` and `AUTO_MOD_UPDATE` as planned/not active instead of pretending they work.
 - Verified compose config, Bash syntax, Docker build, SteamCMD startup, config generation, empty modlist handling, backup creation, and no-executable failure behavior.
+- Created private GitHub repository `bryans1981/ConanExilesContainer`.
+- Added `origin` remote and pushed `main`.
+- Added permanent GitHub automation-first rules to the project-control docs.
 
 ## In Progress
 
@@ -28,13 +42,14 @@ Initial MVP scaffold is complete and locally validated as far as possible withou
 4. If native files exist, verify executable name, config paths, launch syntax, and modlist behavior from downloaded files.
 5. If only Windows files exist, decide whether to add a documented optional Wine fallback in a later phase.
 6. Test Workshop mod download with known mod IDs.
-7. Commit/push to a private GitHub repo once remote creation is available.
+7. Continue commits and pushes to `origin/main` after meaningful verified changes.
 
 ## Known Blockers
 
-- `gh` is unavailable on this host, so remote GitHub repository creation must be done manually or after installing GitHub CLI.
 - SteamCMD anonymous login fails from Docker Desktop with `FAILED (No Connection)`. The same failure occurs in the upstream `steamcmd/steamcmd:ubuntu-24` image and with Docker host networking.
 - Native Linux server availability for AppID `443030` has not yet been proven by a completed SteamCMD install in this environment.
+
+GitHub automation blockers: none currently. `gh` is unavailable, but Git Credential Manager provided authenticated credentials and the GitHub REST API repo creation path succeeded without printing secrets.
 
 ## Known Risks
 
@@ -47,6 +62,12 @@ Initial MVP scaffold is complete and locally validated as far as possible withou
 
 - `docker version`: passed; Docker Desktop engine is available.
 - `gh auth status`: failed; `gh` command is not installed.
+- `git config --get credential.helper`: Git Credential Manager is configured.
+- Git Credential Manager non-interactive credential probe: GitHub username/password fields were present; secret values were not printed.
+- GitHub connector `_get_repo` for `bryans1981/ConanExilesContainer`: initially returned 404 before creation.
+- `git ls-remote https://github.com/bryans1981/ConanExilesContainer.git HEAD`: initially returned repository not found before creation.
+- GitHub REST `POST /user/repos`: created private repo `https://github.com/bryans1981/ConanExilesContainer`.
+- `git push -u origin main`: passed for initial scaffold commit.
 - `docker compose config`: passed.
 - Bash syntax check for all scripts using Ubuntu container: passed.
 - `docker compose build`: passed.
@@ -68,21 +89,17 @@ docker compose build
 docker compose up
 docker compose run --rm conan gosu conan env HOME=/serverdata/steam steamcmd +@ShutdownOnFailedCommand 1 +@NoPromptForPassword 1 +quit
 docker compose run --rm conan gosu conan env HOME=/serverdata/steam /scripts/update-server.sh
-```
-
-Manual private GitHub repo creation/push command when ready:
-
-```powershell
-git remote add origin https://github.com/<YOUR_GITHUB_USER>/ConanExilesContainer.git
-git branch -M main
+git remote -v
 git push -u origin main
 ```
 
-Create the repository as private before pushing. If GitHub CLI is later installed and authenticated:
+GitHub automation preference when repo creation is needed and `gh` is available:
 
 ```powershell
-gh repo create ConanExilesContainer --private --source . --remote origin --push
+gh repo create bryans1981/ConanExilesContainer --private --source . --remote origin --push
 ```
+
+If `gh` is unavailable, try authenticated git/Git Credential Manager and connector/API paths before giving manual instructions.
 
 ## Important Decisions Made
 
@@ -93,6 +110,7 @@ gh repo create ConanExilesContainer --private --source . --remote origin --push
 - Do not add Wine in MVP.
 - Fail loudly when native Linux executable verification fails.
 - Keep 8080 reserved for Phase 2 WebGUI only.
+- GitHub repository work must be automation-first and private by default.
 
 ## Files Changed In Latest Session
 
@@ -128,4 +146,4 @@ gh repo create ConanExilesContainer --private --source . --remote origin --push
 - Verify modlist path/content format with real mods.
 - Verify server launch syntax.
 - Run the full local Docker Desktop test checklist.
-- Commit after validation has been recorded.
+- Push documentation/rule updates after they are committed.
