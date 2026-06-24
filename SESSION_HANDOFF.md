@@ -6,10 +6,9 @@
 - Remote name: `origin`
 - Remote URL: `https://github.com/bryans1981/ConanExilesContainer.git`
 - GitHub visibility: private
-- Latest confirmed baseline before this pass: `a08296e Add safe env defaults and clean README`
-- Local commit for this pass: `Add local durability and Docker Hub workflow` (check `git log -1` for the final hash).
-- Local and remote baseline check: `git rev-list --left-right --count HEAD...origin/main` returned `0 0`
-- Commit message for this pass: `Add local durability and Docker Hub workflow`
+- Latest confirmed baseline before Docker Hub publish attempt: `52d2bfd Add local durability and Docker Hub workflow`
+- Local and remote baseline check before publish attempt: `git status --short --branch` returned `## main...origin/main`
+- Commit message for this handoff/status update: `Publish Docker Hub image`
 - GitHub automation blockers: none currently. `gh` is unavailable, but authenticated git/Git Credential Manager/API paths have worked for this repository.
 
 ## Current Live Server Status
@@ -104,12 +103,19 @@ Prepared tags:
 - `bryans1981/conanexilescontainer:latest`
 - `bryans1981/conanexilescontainer:<short-git-sha>`
 
-Post-commit dry-run output verified tags for the local commit present at dry-run time:
+Publish attempt status on June 24, 2026:
 
-- `docker.io/bryans1981/conanexilescontainer:latest`
-- `docker.io/bryans1981/conanexilescontainer:<short-git-sha>`
+- Blocked before push because Docker Hub authentication was not present.
+- `git status --short --branch`: clean, `main...origin/main`.
+- `git log --oneline -5`: latest commit was `52d2bfd Add local durability and Docker Hub workflow`.
+- `docker info`: Docker Desktop reachable, client/server `29.4.2`, context `desktop-linux`, builtin seccomp.
+- `docker compose build`: pass.
+- Docker CLI config exists and uses credential store `desktop`.
+- `docker-credential-desktop list`: helper available with one stored credential entry, but no Docker Hub/index.docker.io entry.
+- Because Docker Hub login/auth was missing, `scripts/dockerhub-build-push.ps1 -Push` was not run and no image was pushed.
+- Pull verification was not run because no push occurred.
 
-Docker credential store `desktop` is configured, but Docker Hub login cannot be fully verified without a push. Do not publish until Docker Hub login, repository/namespace access, final tags, and user intent are confirmed. This pass did not push an image.
+Required next manual step: run `docker login docker.io` with the intended Docker Hub account, then retry `scripts/dockerhub-build-push.ps1 -Push`. Do not print Docker Hub credentials or tokens.
 
 ## Important Decisions
 
@@ -126,8 +132,8 @@ Docker credential store `desktop` is configured, but Docker Hub login cannot be 
 
 ## Next Recommended Steps
 
-1. Push `Add local durability and Docker Hub workflow` if it has not already been pushed.
-2. Confirm Docker Hub login and repository access for `bryans1981/conanexilescontainer`.
-3. Run `scripts/dockerhub-build-push.ps1 -Build` or `-Push` only after final publish intent is clear.
-4. After Docker Hub publish, verify pull/use of the published image before moving to Unraid.
+1. Log in to Docker Hub with `docker login docker.io` for an account that can push `bryans1981/conanexilescontainer`.
+2. Retry `scripts/dockerhub-build-push.ps1 -Push`.
+3. Verify pull with `docker pull bryans1981/conanexilescontainer:latest`.
+4. After a successful push and pull verification, update `README.md`, `docs/DOCKERHUB.md`, and this handoff with the pushed tags and pull result.
 5. Set up Unraid using the Docker Hub image, mapped ports/volumes, and UI environment variable overrides.
