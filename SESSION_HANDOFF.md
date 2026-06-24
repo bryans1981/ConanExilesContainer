@@ -6,7 +6,7 @@
 - Remote name: `origin`
 - Remote URL: `https://github.com/bryans1981/ConanExilesContainer.git`
 - GitHub visibility: private
-- Latest confirmed baseline before Docker Hub publish: `8019941 Publish Docker Hub image`
+- Latest confirmed baseline before Docker Hub republish: `4f827cb Set backup on stop default`
 - Local and remote baseline check before publish: `git status --short --branch` returned `## main...origin/main`
 - Commit message for this handoff/status update: `Publish Docker Hub image`
 - GitHub automation blockers: none currently. `gh` is unavailable, but authenticated git/Git Credential Manager/API paths have worked for this repository.
@@ -39,6 +39,8 @@ Use `docker compose --env-file .env.local-live ...` for continued live-server wo
 - Updated `PROJECT.md` and `PROJECT_MAP.md` so the next target order is local durability, Docker Hub publish, Unraid after publish, then Rocky later after ports are open.
 - Did not update `AGENTS.md`; no new permanent agent rule was needed.
 - Published the Docker Hub image to `docker.io/bryans1981/conanexilescontainer`.
+- Changed the committed and container fallback default for `BACKUP_ON_STOP` to `true`.
+- Copied the current `README.md` to the Docker Hub repository overview using `chko/docker-pushrm:latest`.
 - Did not delete live server data, saves, config, logs, Steam cache, mods, or backups.
 
 ## Validation Results This Pass
@@ -101,21 +103,22 @@ docker.io/bryans1981/conanexilescontainer
 Pushed tags:
 
 - `bryans1981/conanexilescontainer:latest`
-- `bryans1981/conanexilescontainer:8019941dadff`
+- `bryans1981/conanexilescontainer:4f827cb230ce`
 
 Publish status on June 24, 2026:
 
 - Docker Hub authentication was present in Docker Desktop's credential helper.
 - `git status --short --branch`: clean, `main...origin/main`.
-- `git log --oneline -5`: latest commit before publish was `8019941 Publish Docker Hub image`.
+- `git log --oneline -5`: latest commit before republish was `4f827cb Set backup on stop default`.
 - `docker info`: Docker Desktop reachable, client/server `29.4.2`, context `desktop-linux`, builtin seccomp.
 - Docker CLI config exists and uses credential store `desktop`.
 - `docker-credential-desktop list`: helper available with Docker Hub/index.docker.io entries.
 - `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dockerhub-build-push.ps1 -Push`: pass.
-- `latest` digest: `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f`.
-- `8019941dadff` digest: `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f`.
+- `latest` digest: `sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6`.
+- `4f827cb230ce` digest: `sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6`.
 - Pull verification command: `docker pull bryans1981/conanexilescontainer:latest`.
 - Pull verification result: pass; Docker reported `Status: Image is up to date for bryans1981/conanexilescontainer:latest`.
+- Docker Hub repository overview update: pass; Docker Hub API readback showed `full_description` exactly matches local `README.md` and the short description is set.
 
 Next step: set up Unraid using the Docker Hub image, mapped ports/volumes, and UI environment variable overrides.
 

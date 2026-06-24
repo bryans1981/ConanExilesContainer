@@ -12,10 +12,10 @@ Pushed tags:
 
 ```text
 bryans1981/conanexilescontainer:latest
-bryans1981/conanexilescontainer:8019941dadff
+bryans1981/conanexilescontainer:4f827cb230ce
 ```
 
-Both pushed tags resolved to digest `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f`.
+Both pushed tags resolved to digest `sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6`.
 
 Semantic version tags can be added later after release versioning exists.
 
@@ -30,7 +30,7 @@ docker pull bryans1981/conanexilescontainer:latest
 Result:
 
 ```text
-Digest: sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f
+Digest: sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6
 Status: Image is up to date for bryans1981/conanexilescontainer:latest
 ```
 

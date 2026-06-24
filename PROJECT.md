@@ -99,7 +99,7 @@ Remaining validation beyond MVP smoke coverage:
 - User confirmed the region display is corrected to America/North America after setting `SERVER_REGION=America`/`serverRegion=1`.
 - Automated local durability testing now exists in `tests/local-durability.ps1` for Docker Desktop Windows and `tests/local-durability.sh` for compatible Bash environments.
 - Docker Hub publishing workflow support exists in `scripts/dockerhub-build-push.ps1` and `docs/DOCKERHUB.md` for `docker.io/bryans1981/conanexilescontainer`.
-- The Docker Hub image is pushed and pull-verified as `bryans1981/conanexilescontainer:latest` and `bryans1981/conanexilescontainer:8019941dadff`.
+- The Docker Hub image is pushed and pull-verified as `bryans1981/conanexilescontainer:latest` and `bryans1981/conanexilescontainer:4f827cb230ce`.
 
 ## Current SteamCMD Blocker
 
@@ -269,9 +269,9 @@ docker.io/bryans1981/conanexilescontainer
 Pushed tags:
 
 - `bryans1981/conanexilescontainer:latest`
-- `bryans1981/conanexilescontainer:8019941dadff`
+- `bryans1981/conanexilescontainer:4f827cb230ce`
 
-Pull verification passed with `docker pull bryans1981/conanexilescontainer:latest`; Docker reported digest `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f`.
+Pull verification passed with `docker pull bryans1981/conanexilescontainer:latest`; Docker reported digest `sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6`.
 
 Use `scripts/dockerhub-build-push.ps1` for future dry-run, build/tag, and explicit `-Push` publishing. Unraid should now use the Docker Hub image with port/volume mappings and environment variable overrides in the Unraid UI.
 
