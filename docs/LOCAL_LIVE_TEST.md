@@ -1,6 +1,6 @@
 # Local Live Client Test
 
-Use this workflow when the goal is to run the Docker Desktop server locally and connect from the Conan Exiles game client on the same Windows host or another machine on the same LAN.
+Use this workflow when the goal is to run the Docker Desktop server locally and connect from a Conan Exiles game client on another machine on the same LAN.
 
 Do not use this workflow for Rocky Linux, Unraid, or WebGUI work.
 
@@ -23,6 +23,9 @@ MOD_DOWNLOAD_BACKEND=depotdownloader
 GAME_PORT=7777
 PINGER_PORT=7778
 QUERY_PORT=27015
+FORCE_QUERY_PORT_ARG=true
+MULTIHOME_IP=
+MULTIHOME_HTTP_IP=
 RCON_ENABLED=true
 RCON_PORT=25575
 RCON_PASSWORD=<local-test-password>
@@ -68,6 +71,12 @@ Run the local status helper:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-live-status.ps1 -EnvFile .env.local-live
 ```
 
+Run the LAN-focused diagnostic helper:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-lan-server-diagnostics.ps1 -EnvFile .env.local-live
+```
+
 The helper checks:
 
 - Compose container status.
@@ -76,6 +85,15 @@ The helper checks:
 - Recent fatal startup patterns.
 - Password value leaks in retained logs.
 - Local `data/` disk usage.
+
+The LAN diagnostic additionally checks:
+
+- Windows host LAN IPv4 addresses.
+- Docker-published UDP/TCP ports.
+- In-container UDP listeners for the game, pinger, and query ports.
+- Host port ownership and old Conan/Dedicated Server Launcher process candidates.
+- Windows Firewall rule status.
+- Query/listing log clues such as SourceServerQueries startup and registration warnings.
 
 ## 5. View Logs
 
@@ -108,33 +126,51 @@ Expected published ports:
 - `27015/udp`: Steam query
 - `25575/tcp`: RCON, when enabled
 
-## 7. Connect From Conan Exiles Client
+## 7. Check Windows Firewall
 
-Try the in-game server browser first:
+The Docker Desktop backend can own the published ports even when no narrow Windows Firewall allow rule exists. Check-only mode does not change firewall state:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\windows-firewall-conan-rules.ps1 -EnvFile .env.local-live
+```
+
+To create or update only the named Conan rules, run from an Administrator PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\windows-firewall-conan-rules.ps1 -EnvFile .env.local-live -Apply
+```
+
+To remove only those named rules later, run from an Administrator PowerShell:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\windows-firewall-conan-rules.ps1 -EnvFile .env.local-live -Remove
+```
+
+## 8. Connect From Conan Exiles Client
+
+From the other LAN client system, try direct connect to the Windows Docker host LAN IP and game port:
+
+```text
+<windows-docker-host-lan-ip>:7777
+```
+
+If the game/client supports Steam favorite or query-style entry, try the query port:
+
+```text
+<windows-docker-host-lan-ip>:27015
+```
+
+Then try the in-game server browser:
 
 ```text
 WickedServerContianer
 ```
 
-If direct connect is available, try:
+Enable `Show Invalid`, `Show Private`, and `Show With Mods`. Use the local test password from `.env.local-live`.
 
-```text
-127.0.0.1:7777
-localhost:7777
-<host-lan-ip>:7777
-```
+Server missing from the browser does not automatically mean the server is down. Direct LAN connection and server-browser registration can fail for different reasons.
 
-Use the local test password from `.env.local-live`.
-
-Query port:
-
-```text
-27015
-```
-
-For another machine on the LAN, use the Windows host LAN IP instead of `127.0.0.1` or `localhost`.
-
-## 8. Stop Or Restart
+## 9. Stop Or Restart
 
 Stop without deleting data:
 
@@ -156,12 +192,13 @@ docker compose --env-file .env.local-live down
 
 Do not delete `./data` unless you intentionally want to remove local server files, saves, config, logs, Steam cache, mods, and backups.
 
-## 9. What To Report Back
+## 10. What To Report Back
 
 After trying the game client, report:
 
 - Whether `WickedServerContianer` appears in the server browser.
-- Whether direct connect works.
+- Whether direct connect to `<windows-docker-host-lan-ip>:7777` works.
+- Whether query/favorite entry with `<windows-docker-host-lan-ip>:27015` works, if supported.
 - Whether the password is accepted.
 - Whether character creation/login reaches the server.
 - Any exact client error text.

@@ -13,6 +13,7 @@ Rules for Codex and future agents:
 - Use ignored local env files for live tests. Do not commit real local test passwords or generated live server data.
 - Keep `AGENTS.md`, `PROJECT.md`, `PROJECT_MAP.md`, and `SESSION_HANDOFF.md` updated after meaningful changes.
 - Run local Docker Desktop testing before claiming MVP success.
+- Do not claim server-browser listing, public registration, direct LAN connection, or live game-client login works until the user confirms the result from an actual Conan Exiles client.
 - Do not attempt LAN, Rocky Linux, or Unraid connectivity tests from the local Codex host. This environment has public internet access only and no LAN access by design.
 - When SteamCMD connectivity fails, compare host public internet, generic container internet/DNS, the project image, and the upstream SteamCMD image before changing app logic.
 - DepotDownloader is the default server and Workshop mod download backend for this project because it has been verified under Docker Desktop default security for AppID `443030` and Workshop item `3720546346`. Keep SteamCMD available as an explicit backend for hosts where it works.

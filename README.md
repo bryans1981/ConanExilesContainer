@@ -118,6 +118,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-live-status.ps
 
 See `docs/LOCAL_LIVE_TEST.md` for the server-browser name, direct-connect options, log checks, stop/restart commands, and what client result to report back. Do not commit `.env.local-live` or real local test passwords.
 
+If a Docker Desktop server reaches `StartPlay` but does not appear in the in-game browser from another LAN client, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-lan-server-diagnostics.ps1 -EnvFile .env.local-live
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\windows-firewall-conan-rules.ps1 -EnvFile .env.local-live
+```
+
+See `docs/TROUBLESHOOTING_SERVER_LISTING.md`. The firewall helper is check-only unless run with `-Apply` from an Administrator PowerShell.
+
 ## Troubleshooting
 
 If SteamCMD anonymous login fails with `FAILED (No Connection)`, run the repeatable diagnostics:

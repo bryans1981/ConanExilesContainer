@@ -70,4 +70,7 @@ DepotDownloader support is verified for server AppID `443030` and for Workshop i
 
 | Variable | Default | Description |
 | --- | --- | --- |
+| `FORCE_QUERY_PORT_ARG` | `true` | Adds `-QueryPort=<QUERY_PORT>` to the server launch arguments. This is enabled by default because local LAN diagnostics verified the server accepts it and starts SourceServerQueries on the configured port. |
+| `MULTIHOME_IP` | empty | Optional Conan launch binding value. When set, adds `-MULTIHOME=<value>`. Leave empty unless diagnosing host/IP binding. Do not commit machine-specific LAN IPs. |
+| `MULTIHOME_HTTP_IP` | empty | Optional Conan HTTP multihome value. When set, adds `-MULTIHOMEHTTP=<value>`. Leave empty unless a verified diagnostic requires it. |
 | `EXTRA_ARGS` | empty | Extra launch arguments split on spaces. Do not put secrets here. |

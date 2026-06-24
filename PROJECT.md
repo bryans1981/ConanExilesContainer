@@ -29,6 +29,7 @@ Current MVP status: the local Docker Desktop default-flow MVP smoke test passed 
 Remaining validation beyond MVP smoke coverage:
 
 - Live game-client login from the Conan Exiles client; do not claim user connection success until the user confirms it.
+- Server-browser visibility from another LAN client; do not claim listing/public registration success until the user confirms it.
 - Multi-mod ordering with more than one real Workshop mod.
 - Removing mod IDs and pruning old downloads.
 - Longer-running public server behavior.
@@ -127,6 +128,24 @@ References:
 - https://steamdb.info/app/443030/depots/
 - https://steamdb.info/app/443030/config/
 
+## Current Local LAN Listing Status
+
+The Docker-hosted live server starts and reaches `StartPlay` on the Windows Docker Desktop host, but browser visibility from another LAN client is not confirmed yet.
+
+Verified on June 24, 2026:
+
+- Docker publishes `7777/udp`, `7778/udp`, `27015/udp`, and `25575/tcp` to the Windows host.
+- The Conan process listens inside the container on `7777/udp`, `7778/udp`, and `27015/udp`.
+- SourceServerQueries starts on `27015`.
+- The server launch command includes `-log -QueryPort=27015`.
+- Windows host UDP ownership for `7777`, `7778`, and `27015` is Docker Desktop's backend process.
+- No old Windows Dedicated Server Launcher, Conan, or host SteamCMD process was found holding the target ports.
+- No specific Windows Firewall inbound allow rules were found for the Conan Docker-published ports.
+- The server log includes `Autologin attempt failed, unable to register server!` and `SteamSockets: Disabled due to no Steam OSS running.`
+- The generated config has the requested local live server name, but the Conan startup report still showed `Name=Conan Exiles Server`; treat this as an open listing/name-registration clue until verified from the game client.
+
+Use `tests/local-lan-server-diagnostics.ps1` and `tests/windows-firewall-conan-rules.ps1` for repeatable checks. Do not claim direct LAN connection or server-browser listing works until the user confirms it from the other LAN client.
+
 ## Environment Variables
 
 | Variable | Default | Purpose | Current file/key target |
@@ -144,6 +163,9 @@ References:
 | `RCON_ENABLED` | `true` | RCON toggle | `ServerSettings.ini` / `ServerSettings.RconEnabled` |
 | `RCON_PORT` | `25575` | RCON TCP port | `ServerSettings.ini` / `ServerSettings.RconPort` |
 | `RCON_PASSWORD` | empty | RCON password | `ServerSettings.ini` / `ServerSettings.RconPassword` |
+| `FORCE_QUERY_PORT_ARG` | `true` | Add explicit `-QueryPort=<QUERY_PORT>` launch arg | Launch command |
+| `MULTIHOME_IP` | empty | Optional `-MULTIHOME=<value>` launch arg for binding diagnostics | Launch command |
+| `MULTIHOME_HTTP_IP` | empty | Optional `-MULTIHOMEHTTP=<value>` launch arg for HTTP binding diagnostics | Launch command |
 | `UPDATE_SERVER_ON_START` | `true` | Run selected download backend update on startup | Startup behavior |
 | `VALIDATE_SERVER_FILES` | `false` | Add backend validation when supported | SteamCMD/DepotDownloader update behavior |
 | `DOWNLOAD_BACKEND` | `depotdownloader` | Server download backend: `steamcmd`, `depotdownloader`, or `auto` | Startup update behavior |

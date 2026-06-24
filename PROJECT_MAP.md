@@ -30,7 +30,7 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `scripts/configure-server.sh`: persistent config/log directory linking and environment-driven config writes.
 - `scripts/update-mods.sh`: selected Workshop backend download/update, ordered modlist generation, removed-mod pruning, and DepotDownloader-first `MOD_DOWNLOAD_BACKEND=auto` fallback.
 - `scripts/backup.sh`: timestamped archive creation and retention cleanup.
-- `scripts/start-server.sh`: native launcher/executable discovery and foreground server launch. The verified downloaded launcher is `ConanSandboxServer.sh`; fallback direct executable is `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
+- `scripts/start-server.sh`: native launcher/executable discovery, redacted launch-argument logging, explicit query-port argument support, optional multihome launch arguments, and foreground server launch. The verified downloaded launcher is `ConanSandboxServer.sh`; fallback direct executable is `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
 - `scripts/healthcheck.sh`: server process healthcheck.
 - `tests/steamcmd-connectivity.ps1`: Windows/PowerShell SteamCMD connectivity diagnostics for host public internet, container networking/DNS, project image SteamCMD, upstream SteamCMD, DNS overrides, and optional host networking.
 - `tests/steamcmd-connectivity.sh`: Bash SteamCMD connectivity diagnostics for compatible Linux/macOS/Git Bash shells.
@@ -40,6 +40,8 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `tests/steamcmd-security-diagnostics.ps1`: Windows/PowerShell Docker security diagnostics for Docker version/info/context, default seccomp, diagnostic `seccomp=unconfined`, optional custom seccomp profile, project image, upstream image, and optional host networking.
 - `tests/steamcmd-security-diagnostics.sh`: Bash Docker security diagnostics for compatible Linux/macOS/Git Bash shells.
 - `tests/local-live-status.ps1`: Windows/PowerShell local live-server status helper for compose service state, published ports, recent `StartPlay`, password leak scan, and local data disk usage.
+- `tests/local-lan-server-diagnostics.ps1`: Windows/PowerShell LAN-client listing/connectivity diagnostic for host LAN IPv4 addresses, Docker published ports, in-container sockets, host port owners, Windows Firewall rule status, listing/query log clues, password leak scan, disk usage, and exact other-LAN-client test steps.
+- `tests/windows-firewall-conan-rules.ps1`: Windows/PowerShell check/apply/remove helper for narrow inbound Conan rules. Check-only by default; `-Apply` and `-Remove` require Administrator PowerShell.
 
 ## Data And Volume Layout
 
@@ -85,6 +87,10 @@ Local Docker Desktop paths:
 - Clean disposable compose e2e using the DepotDownloader defaults downloaded AppID `443030`, generated config, downloaded Workshop item `3720546346`, generated `ConanSandbox/Mods/modlist.txt`, reached `StartPlay`, stopped gracefully, restarted, preserved config/modlist, created backups, and removed large disposable server/cache folders after preserving proof logs.
 - Local live-client testing uses ignored `.env.local-live` or `.env.test-live` files. Do not commit local live passwords or generated `data/`.
 - Live client connection success must be confirmed by the user from the Conan Exiles game client before it is claimed.
+- Server-browser listing and direct LAN connection success must be confirmed by the user from another Conan Exiles client before it is claimed.
+- Local Docker Desktop LAN diagnostics on June 24, 2026 verified Docker publishing and in-container listeners for `7777/udp`, `7778/udp`, and `27015/udp`; Windows Firewall had no specific inbound allow rules for those Docker-published ports.
+- The local live launch command includes `-QueryPort=27015` when `FORCE_QUERY_PORT_ARG=true`.
+- `MULTIHOME_IP` and `MULTIHOME_HTTP_IP` exist for diagnostics but should remain empty unless host/IP binding is being explicitly tested.
 - Auto update loops are not active in MVP.
 
 Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Linux, and Unraid still need later verification.
@@ -95,10 +101,11 @@ Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Lin
 - `docs/MODS.md`: Workshop mod behavior.
 - `docs/BACKUPS.md`: backup and restore basics.
 - `docs/LOCAL_DOCKER_DESKTOP.md`: local test procedure and current status.
-- `docs/LOCAL_LIVE_TEST.md`: local Docker Desktop live-client test workflow and connection checklist.
+- `docs/LOCAL_LIVE_TEST.md`: local Docker Desktop live-client test workflow, LAN-client connection checklist, diagnostics, and firewall helper commands.
 - `docs/ROCKY_LINUX.md`: Rocky Linux deployment/test notes.
 - `docs/WEBGUI_PHASE_2.md`: future WebGUI design.
 - `docs/TROUBLESHOOTING_STEAMCMD.md`: SteamCMD/Docker Desktop connectivity blocker explanation and diagnostic workflow.
+- `docs/TROUBLESHOOTING_SERVER_LISTING.md`: LAN server-browser listing and direct-connect troubleshooting for Docker Desktop, Conan query/pinger ports, Windows Firewall, startup report clues, and user report-back checklist.
 - `test-results/depotdownloader-connectivity/`: ignored proof logs from DepotDownloader diagnostics, including the successful AppID `443030` download and bounded launch probe from June 23, 2026.
 - `test-results/steamcmd-security-diagnostics/`: ignored proof logs from Docker seccomp/security diagnostics.
 - `test-results/windows-steamcmd-comparison/`: ignored proof logs from host Windows SteamCMD comparison.
