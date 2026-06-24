@@ -18,8 +18,8 @@ Passwords are never printed in logs. Logs only report whether each password is s
 
 | Variable | Default | Target |
 | --- | --- | --- |
-| `SERVER_NAME` | `Conan Exiles Server` | `ServerSettings.ini` / `ServerSettings.ServerName` |
-| `SERVER_PASSWORD` | empty | `ServerSettings.ini` / `ServerSettings.ServerPassword` |
+| `SERVER_NAME` | `Conan Exiles Server` | Active: `Engine.ini` / `OnlineSubsystem.ServerName`; also mirrored to `ServerSettings.ini` / `ServerSettings.ServerName` |
+| `SERVER_PASSWORD` | empty | Active: `Engine.ini` / `OnlineSubsystem.ServerPassword`; also mirrored to `ServerSettings.ini` / `ServerSettings.ServerPassword` |
 | `ADMIN_PASSWORD` | empty | `ServerSettings.ini` / `ServerSettings.AdminPassword` |
 | `MAX_PLAYERS` | `40` | `ServerSettings.ini` / `ServerSettings.MaxPlayers`; `Game.ini` / `/Script/Engine.GameSession.MaxPlayers` |
 | `GAME_PORT` | `7777` | `ServerSettings.ini` / `ServerSettings.Port`; `Engine.ini` / `URL.Port` |
@@ -29,7 +29,11 @@ Passwords are never printed in logs. Logs only report whether each password is s
 | `RCON_PORT` | `25575` | `ServerSettings.ini` / `ServerSettings.RconPort` |
 | `RCON_PASSWORD` | empty | `ServerSettings.ini` / `ServerSettings.RconPassword` |
 
-These config paths were verified against real AppID `443030` Linux server files during the clean local Docker Desktop e2e run on June 23, 2026.
+The active Linux server config path is `/serverdata/config/ConanSandbox/Saved/Config/LinuxServer`, linked into `/serverdata/serverfiles/ConanSandbox/Saved/Config/LinuxServer`.
+
+These config paths were verified against real AppID `443030` Linux server files during the clean local Docker Desktop e2e run on June 23, 2026, and local live diagnostics on June 24, 2026.
+
+For password-protected local live testing, blank password env vars mean no password. Non-blank `SERVER_PASSWORD` and `ADMIN_PASSWORD` values are written on container startup without rewriting unrelated config keys.
 
 ## Update Variables
 

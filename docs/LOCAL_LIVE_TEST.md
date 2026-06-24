@@ -77,6 +77,13 @@ Run the LAN-focused diagnostic helper:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-lan-server-diagnostics.ps1 -EnvFile .env.local-live
 ```
 
+If direct LAN connect works but the server does not require the expected password, run the masked env/config diagnostics:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live
+```
+
 The helper checks:
 
 - Compose container status.
@@ -94,6 +101,21 @@ The LAN diagnostic additionally checks:
 - Host port ownership and old Conan/Dedicated Server Launcher process candidates.
 - Windows Firewall rule status.
 - Query/listing log clues such as SourceServerQueries startup and registration warnings.
+- Active config path and required local live name/password config keys.
+
+The active Linux server config path is:
+
+```text
+/serverdata/config/ConanSandbox/Saved/Config/LinuxServer
+```
+
+It is linked into:
+
+```text
+/serverdata/serverfiles/ConanSandbox/Saved/Config/LinuxServer
+```
+
+The managed server name and server password are written to `Engine.ini` section `[OnlineSubsystem]` on container startup. They are also mirrored to `ServerSettings.ini` section `[ServerSettings]`.
 
 ## 5. View Logs
 
@@ -170,6 +192,8 @@ Enable `Show Invalid`, `Show Private`, and `Show With Mods`. Use the local test 
 
 Server missing from the browser does not automatically mean the server is down. Direct LAN connection and server-browser registration can fail for different reasons.
 
+Direct LAN connect working but allowing entry with no password means the game-port path is working and env/config application should be checked before spending more time on firewall or browser listing.
+
 ## 9. Stop Or Restart
 
 Stop without deleting data:
@@ -198,8 +222,9 @@ After trying the game client, report:
 
 - Whether `WickedServerContianer` appears in the server browser.
 - Whether direct connect to `<windows-docker-host-lan-ip>:7777` works.
+- Whether direct connect requires a password.
 - Whether query/favorite entry with `<windows-docker-host-lan-ip>:27015` works, if supported.
-- Whether the password is accepted.
+- Whether the configured local test password is accepted or rejected.
 - Whether character creation/login reaches the server.
 - Any exact client error text.
 - Whether connection attempts appear in Docker logs.

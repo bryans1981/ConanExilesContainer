@@ -40,6 +40,42 @@ function Read-EnvFile {
     return $values
 }
 
+function Read-IniFile {
+    param([string]$Path)
+
+    $values = @{}
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        return $values
+    }
+
+    $section = ''
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        $trimmed = $line.Trim()
+        if ($trimmed -match '^\s*[;#]' -or $trimmed -eq '') {
+            continue
+        }
+        if ($trimmed -match '^\[(.+)\]\s*$') {
+            $section = $matches[1]
+            continue
+        }
+        if ($trimmed -match '^([^=]+?)\s*=\s*(.*)$') {
+            $key = $matches[1].Trim()
+            $values["$section`n$key"] = $matches[2]
+        }
+    }
+    return $values
+}
+
+function Get-IniValue {
+    param([hashtable]$Ini, [string]$Section, [string]$Key)
+
+    $mapKey = "$Section`n$Key"
+    if ($Ini.ContainsKey($mapKey)) {
+        return $Ini[$mapKey]
+    }
+    return $null
+}
+
 function Get-MapValue {
     param([hashtable]$Map, [string]$Name, [string]$Default)
     if ($Map.ContainsKey($Name) -and -not [string]::IsNullOrWhiteSpace($Map[$Name])) {
@@ -111,10 +147,28 @@ try {
     $rconPort = Get-MapValue $envValues 'RCON_PORT' '25575'
     $rconEnabled = Test-Truthy (Get-MapValue $envValues 'RCON_ENABLED' 'true')
     $serverName = Get-MapValue $envValues 'SERVER_NAME' 'Conan Exiles Server'
+    $serverPassword = Get-MapValue $envValues 'SERVER_PASSWORD' ''
+    $adminPassword = Get-MapValue $envValues 'ADMIN_PASSWORD' ''
     $composeArgs = @('--env-file', (Resolve-Path -LiteralPath $EnvFile).Path)
 
     Write-Host 'Local LAN Conan Exiles diagnostics'
     Write-Host ''
+
+    if ($serverName -eq 'Conan Exiles Server') {
+        Add-Fail 'env.SERVER_NAME' 'Still using default server name during local live test.'
+    } else {
+        Add-Pass 'env.SERVER_NAME' $serverName
+    }
+    if ([string]::IsNullOrEmpty($serverPassword)) {
+        Add-Fail 'env.SERVER_PASSWORD' 'Blank during password-protected local live test.'
+    } else {
+        Add-Pass 'env.SERVER_PASSWORD' '<set>'
+    }
+    if ([string]::IsNullOrEmpty($adminPassword)) {
+        Add-Fail 'env.ADMIN_PASSWORD' 'Blank during admin password local live test.'
+    } else {
+        Add-Pass 'env.ADMIN_PASSWORD' '<set>'
+    }
 
     $lanAddresses = Get-NetIPConfiguration | Where-Object {
         $_.IPv4Address -and
@@ -172,6 +226,13 @@ try {
             }
         }
 
+        $activeConfigPath = (& docker exec $containerId bash -lc 'readlink -f /serverdata/serverfiles/ConanSandbox/Saved/Config/LinuxServer 2>/dev/null || true' 2>$null) -join ''
+        if ([string]::IsNullOrWhiteSpace($activeConfigPath)) {
+            Add-Fail 'active-config' 'Could not determine active LinuxServer config path inside the container.'
+        } else {
+            Add-Pass 'active-config' $activeConfigPath
+        }
+
         $socketRaw = @{}
         foreach ($proto in @('udp', 'udp6', 'tcp', 'tcp6')) {
             $socketRaw[$proto] = (& docker exec $containerId cat "/proc/net/$proto" 2>$null) -join "`n"
@@ -202,6 +263,42 @@ try {
                     Add-Fail 'in-container-socket' "$($expected.Protocol) port $($expected.Port) was not observed inside the container."
                 }
             }
+        }
+    }
+
+    $configRoot = Join-Path $script:RepoRoot 'data\config\ConanSandbox\Saved\Config\LinuxServer'
+    $engineIni = Join-Path $configRoot 'Engine.ini'
+    $serverSettingsIni = Join-Path $configRoot 'ServerSettings.ini'
+    if (-not (Test-Path -LiteralPath $configRoot -PathType Container)) {
+        Add-Fail 'active-config-host' "Missing expected local config path: $configRoot"
+    } else {
+        Add-Pass 'active-config-host' $configRoot
+        $engine = Read-IniFile -Path $engineIni
+        $serverSettings = Read-IniFile -Path $serverSettingsIni
+
+        $engineName = Get-IniValue -Ini $engine -Section 'OnlineSubsystem' -Key 'ServerName'
+        if ($engineName -eq $serverName) {
+            Add-Pass 'config.Engine.OnlineSubsystem.ServerName' $engineName
+        } else {
+            if ($null -eq $engineName) {
+                Add-Fail 'config.Engine.OnlineSubsystem.ServerName' "Expected $serverName but found <missing>."
+            } else {
+                Add-Fail 'config.Engine.OnlineSubsystem.ServerName' "Expected $serverName but found $engineName."
+            }
+        }
+
+        $enginePassword = Get-IniValue -Ini $engine -Section 'OnlineSubsystem' -Key 'ServerPassword'
+        if ([string]::IsNullOrEmpty($enginePassword)) {
+            Add-Fail 'config.Engine.OnlineSubsystem.ServerPassword' 'Missing or blank during password-protected local live test.'
+        } else {
+            Add-Pass 'config.Engine.OnlineSubsystem.ServerPassword' '<set>'
+        }
+
+        $adminConfigPassword = Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'AdminPassword'
+        if ([string]::IsNullOrEmpty($adminConfigPassword)) {
+            Add-Fail 'config.ServerSettings.AdminPassword' 'Missing or blank during admin password local live test.'
+        } else {
+            Add-Pass 'config.ServerSettings.AdminPassword' '<set>'
         }
     }
 
@@ -265,6 +362,18 @@ try {
         if ($count -gt 0) {
             Add-Info 'log-finding' "$pattern count=$count"
         }
+    }
+
+    $startupReports = [regex]::Matches($logs, 'Startup report\..*?Name=(.*?)\s+Map=', 'IgnoreCase')
+    if ($startupReports.Count -gt 0) {
+        $startupName = $startupReports[$startupReports.Count - 1].Groups[1].Value
+        if ($startupName -eq $serverName) {
+            Add-Pass 'log-startup-report-name' $startupName
+        } else {
+            Add-Fail 'log-startup-report-name' "Expected $serverName but startup report showed $startupName."
+        }
+    } else {
+        Add-Warn 'log-startup-report-name' 'No Startup report name found in recent logs.'
     }
 
     $interesting = $logs -split "`n" | Where-Object {

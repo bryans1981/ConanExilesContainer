@@ -120,6 +120,8 @@ EOF
         cat > "$engine_ini" <<'EOF'
 [URL]
 
+[OnlineSubsystem]
+
 [OnlineSubsystemSteam]
 EOF
         log "Generated default Engine.ini because it was missing."
@@ -185,6 +187,8 @@ main() {
     set_ini_value "$server_settings" "ServerSettings" "RconPassword" "${RCON_PASSWORD:-}" true
 
     set_ini_value "$engine_ini" "URL" "Port" "$game_port"
+    set_ini_value "$engine_ini" "OnlineSubsystem" "ServerName" "${SERVER_NAME:-Conan Exiles Server}"
+    set_ini_value "$engine_ini" "OnlineSubsystem" "ServerPassword" "${SERVER_PASSWORD:-}" true
     set_ini_value "$engine_ini" "OnlineSubsystemSteam" "GameServerQueryPort" "$query_port"
     set_ini_value "$game_ini" "/Script/Engine.GameSession" "MaxPlayers" "$max_players"
 

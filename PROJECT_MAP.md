@@ -27,7 +27,7 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `scripts/entrypoint.sh`: runtime user setup, directory prep, SteamCMD home seeding, safe logging, backup/update/config/mod orchestration, signal handling.
 - `scripts/install-depotdownloader.sh`: build-time installer for pinned DepotDownloader release `DepotDownloader_3.4.0`.
 - `scripts/update-server.sh`: selected backend install/update for AppID `443030`, Linux platform request, timestamped backend logs, DepotDownloader-first `DOWNLOAD_BACKEND=auto` fallback, and native executable verification.
-- `scripts/configure-server.sh`: persistent config/log directory linking and environment-driven config writes.
+- `scripts/configure-server.sh`: persistent config/log directory linking and managed-key environment-driven config writes. Server name/password are written to active `Engine.ini` `[OnlineSubsystem]` and mirrored to `ServerSettings.ini`.
 - `scripts/update-mods.sh`: selected Workshop backend download/update, ordered modlist generation, removed-mod pruning, and DepotDownloader-first `MOD_DOWNLOAD_BACKEND=auto` fallback.
 - `scripts/backup.sh`: timestamped archive creation and retention cleanup.
 - `scripts/start-server.sh`: native launcher/executable discovery, redacted launch-argument logging, explicit query-port argument support, optional multihome launch arguments, and foreground server launch. The verified downloaded launcher is `ConanSandboxServer.sh`; fallback direct executable is `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
@@ -41,6 +41,8 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `tests/steamcmd-security-diagnostics.sh`: Bash Docker security diagnostics for compatible Linux/macOS/Git Bash shells.
 - `tests/local-live-status.ps1`: Windows/PowerShell local live-server status helper for compose service state, published ports, recent `StartPlay`, password leak scan, and local data disk usage.
 - `tests/local-lan-server-diagnostics.ps1`: Windows/PowerShell LAN-client listing/connectivity diagnostic for host LAN IPv4 addresses, Docker published ports, in-container sockets, host port owners, Windows Firewall rule status, listing/query log clues, password leak scan, disk usage, and exact other-LAN-client test steps.
+- `tests/local-env-effective-diagnostics.ps1`: Windows/PowerShell masked local env diagnostic for env-file values, compose effective environment, container environment, and local live name/password presence.
+- `tests/conan-config-effective-diagnostics.ps1`: Windows/PowerShell masked active Conan config diagnostic for active config path, `Engine.ini` `[OnlineSubsystem]` name/password, ports, `ServerSettings.ini` admin/password values, and key inventory.
 - `tests/windows-firewall-conan-rules.ps1`: Windows/PowerShell check/apply/remove helper for narrow inbound Conan rules. Check-only by default; `-Apply` and `-Remove` require Administrator PowerShell.
 
 ## Data And Volume Layout
@@ -91,6 +93,8 @@ Local Docker Desktop paths:
 - Local Docker Desktop LAN diagnostics on June 24, 2026 verified Docker publishing and in-container listeners for `7777/udp`, `7778/udp`, and `27015/udp`; Windows Firewall had no specific inbound allow rules for those Docker-published ports.
 - The local live launch command includes `-QueryPort=27015` when `FORCE_QUERY_PORT_ARG=true`.
 - `MULTIHOME_IP` and `MULTIHOME_HTTP_IP` exist for diagnostics but should remain empty unless host/IP binding is being explicitly tested.
+- User confirmed direct LAN connect from another system worked, but initially without the expected password. The env reached the container; the fix writes `SERVER_NAME` and `SERVER_PASSWORD` to active `Engine.ini` `[OnlineSubsystem]`.
+- Local live diagnostics after the fix verified startup report `Name=WickedServerContianer`; password protection still requires user confirmation from the Conan Exiles client.
 - Auto update loops are not active in MVP.
 
 Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Linux, and Unraid still need later verification.

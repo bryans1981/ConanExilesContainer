@@ -29,6 +29,7 @@ Current MVP status: the local Docker Desktop default-flow MVP smoke test passed 
 Remaining validation beyond MVP smoke coverage:
 
 - Live game-client login from the Conan Exiles client; do not claim user connection success until the user confirms it.
+- Password-protected direct LAN connection from the Conan Exiles client; do not claim password protection success until the user confirms it.
 - Server-browser visibility from another LAN client; do not claim listing/public registration success until the user confirms it.
 - Multi-mod ordering with more than one real Workshop mod.
 - Removing mod IDs and pruning old downloads.
@@ -77,6 +78,7 @@ Remaining validation beyond MVP smoke coverage:
 - Verified native executable: `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
 - Config generation creates persistent `LinuxServer` config files.
 - Config generation applies `SERVER_NAME`, `SERVER_PASSWORD`, `ADMIN_PASSWORD`, `MAX_PLAYERS`, ports, RCON toggle, and `RCON_PASSWORD`.
+- Local live diagnostics verified that `SERVER_NAME` and `SERVER_PASSWORD` must be written to active `Engine.ini` section `[OnlineSubsystem]` for the running Linux server to consume them; the values are also mirrored to `ServerSettings.ini` for compatibility/visibility.
 - Password values are redacted from project startup/config logs.
 - Ignored local env files such as `.env.local-live` and `.env.test-live` are used for live testing and must not be committed.
 - Empty `WORKSHOP_MOD_IDS` creates an empty active mod list.
@@ -142,9 +144,24 @@ Verified on June 24, 2026:
 - No old Windows Dedicated Server Launcher, Conan, or host SteamCMD process was found holding the target ports.
 - No specific Windows Firewall inbound allow rules were found for the Conan Docker-published ports.
 - The server log includes `Autologin attempt failed, unable to register server!` and `SteamSockets: Disabled due to no Steam OSS running.`
-- The generated config has the requested local live server name, but the Conan startup report still showed `Name=Conan Exiles Server`; treat this as an open listing/name-registration clue until verified from the game client.
+- Before the config fix, generated `ServerSettings.ini` had the requested local live server name, but the Conan startup report still showed `Name=Conan Exiles Server`; after adding `Engine.ini` `[OnlineSubsystem]` name/password writes, the startup report shows `Name=WickedServerContianer`.
 
 Use `tests/local-lan-server-diagnostics.ps1` and `tests/windows-firewall-conan-rules.ps1` for repeatable checks. Do not claim direct LAN connection or server-browser listing works until the user confirms it from the other LAN client.
+
+## Current Local Live Config Status
+
+The user confirmed direct LAN connection from another system to the Windows Docker host worked, but the server allowed entry without the expected server password. That proved basic LAN/game-port traffic was working and shifted the blocker to config application.
+
+Verified on June 24, 2026 after the config fix:
+
+- `.env.local-live` values reached Docker Compose and the container environment.
+- Active config path inside the container resolved to `/serverdata/config/ConanSandbox/Saved/Config/LinuxServer`.
+- `Engine.ini` section `[OnlineSubsystem]` now contains the configured server name and a non-empty server password.
+- `ServerSettings.ini` section `[ServerSettings]` contains the configured server name, non-empty server password, non-empty admin password, game/pinger/query ports, and RCON settings.
+- The startup report now shows `Name=WickedServerContianer`.
+- `StartPlay` and SourceServerQueries on `27015` are still reached after restart.
+
+Do not claim password protection works until the user confirms a direct LAN connection prompts for and accepts the configured local test password.
 
 ## Environment Variables
 
@@ -153,8 +170,8 @@ Use `tests/local-lan-server-diagnostics.ps1` and `tests/windows-firewall-conan-r
 | `TZ` | `America/New_York` | Container timezone | Runtime environment |
 | `PUID` | `1000` | Runtime user ID | Linux user setup |
 | `PGID` | `1000` | Runtime group ID | Linux group setup |
-| `SERVER_NAME` | `Conan Exiles Server` | Server display name | `ServerSettings.ini` / `ServerSettings.ServerName` |
-| `SERVER_PASSWORD` | empty | Server join password | `ServerSettings.ini` / `ServerSettings.ServerPassword` |
+| `SERVER_NAME` | `Conan Exiles Server` | Server display name | Active: `Engine.ini` / `OnlineSubsystem.ServerName`; mirrored to `ServerSettings.ini` / `ServerSettings.ServerName` |
+| `SERVER_PASSWORD` | empty | Server join password | Active: `Engine.ini` / `OnlineSubsystem.ServerPassword`; mirrored to `ServerSettings.ini` / `ServerSettings.ServerPassword` |
 | `ADMIN_PASSWORD` | empty | Admin password | `ServerSettings.ini` / `ServerSettings.AdminPassword` |
 | `MAX_PLAYERS` | `40` | Player limit | `ServerSettings.ini` / `ServerSettings.MaxPlayers`; `Game.ini` / `/Script/Engine.GameSession.MaxPlayers` |
 | `GAME_PORT` | `7777` | Game UDP port | `ServerSettings.ini` / `ServerSettings.Port`; `Engine.ini` / `URL.Port` |

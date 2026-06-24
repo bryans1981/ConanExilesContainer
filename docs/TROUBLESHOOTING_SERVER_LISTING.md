@@ -22,7 +22,8 @@ Important unresolved clues:
 
 - Logs included `Autologin attempt failed, unable to register server!`
 - Logs included `SteamSockets: Disabled due to no Steam OSS running.`
-- Generated config had the requested local live server name, but the Conan startup report still showed `Name=Conan Exiles Server`.
+- Before the config fix, generated `ServerSettings.ini` had the requested local live server name, but the Conan startup report still showed `Name=Conan Exiles Server`.
+- After writing `SERVER_NAME` and `SERVER_PASSWORD` to active `Engine.ini` section `[OnlineSubsystem]`, the startup report showed `Name=WickedServerContianer`.
 
 Do not claim browser listing or live login works until the user confirms it from the other LAN client.
 
@@ -43,6 +44,7 @@ This reports:
 - Host port owners and possible old Conan processes.
 - Windows Firewall rule status.
 - Recent listing/query log findings.
+- Active config path and required local live name/password config keys.
 - Password leak scan result.
 - Local data disk usage.
 - Exact other-LAN-client test targets.
@@ -96,6 +98,15 @@ Enable:
 
 If direct LAN connect fails, prioritize Windows Firewall, host network profile, Docker Desktop networking, port ownership, and VPN/proxy/security software checks.
 
+If direct LAN connect works but entry is allowed with no password, basic LAN/game-port traffic is working. Check env/config application before focusing on server-browser listing:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live
+```
+
+For the Linux server, the active config path is `/serverdata/config/ConanSandbox/Saved/Config/LinuxServer`, linked into `/serverdata/serverfiles/ConanSandbox/Saved/Config/LinuxServer`. The managed server name and server password live in `Engine.ini` section `[OnlineSubsystem]`, and are also mirrored to `ServerSettings.ini` section `[ServerSettings]`.
+
 If direct LAN connect works but browser listing fails, prioritize query-port behavior, registration warnings, server name mismatch, private/listing settings, and upstream Conan/Funcom listing behavior.
 
 ## Multihome And Query Args
@@ -116,6 +127,8 @@ Set these only in ignored local env files when explicitly testing host/IP bindin
 Report:
 
 - Whether direct connect to the Windows Docker host LAN IP and game port works.
+- Whether direct connect requires a password.
+- Whether the configured local test password is accepted or rejected.
 - Whether the query/favorite test works, if supported.
 - Whether `WickedServerContianer` appears in the browser.
 - Whether the password prompt appears.

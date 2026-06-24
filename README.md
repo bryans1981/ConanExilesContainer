@@ -66,6 +66,13 @@ Copy `.env.example` to `.env` and edit values before first boot. Passwords are n
 
 See `docs/CONFIG.md` for the full variable map.
 
+If direct LAN connect works but the server does not require the expected password, check the effective env and active Conan config without printing secrets:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live
+```
+
 ## Updates
 
 `UPDATE_SERVER_ON_START=true` runs the selected download backend on container startup. If `UPDATE_SERVER_ON_START=false` and existing server files are detected, update is skipped. If server files do not exist, the container downloads them even when the update flag is false.

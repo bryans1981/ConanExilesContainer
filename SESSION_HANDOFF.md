@@ -6,16 +6,18 @@
 - Remote name: `origin`
 - Remote URL: `https://github.com/bryans1981/ConanExilesContainer.git`
 - GitHub visibility: private
-- Latest baseline commit before this pass: `c0c4d1d Add local live server test workflow`
+- Latest baseline commit before this pass: `4c99bb7 Add LAN server listing diagnostics`
 - Initial scaffold commit: `9ae5a6f Initial Conan Exiles container scaffold`
-- Commit planned for this pass: `Add LAN server listing diagnostics`
+- Commit planned for this pass: `Fix local live env config application`
 - GitHub automation blockers: none currently. `gh` is unavailable, but authenticated git/Git Credential Manager/API paths have worked for this repository.
 
 ## Current Live Test Status
 
 Do not move to Rocky Linux yet. Do not start WebGUI work yet.
 
-The local Docker Desktop live server is running for Conan Exiles client testing from another LAN system.
+The user confirmed direct LAN connection from another system to the Windows Docker host worked, but the server allowed entry without the expected server password. That means basic LAN/game-port traffic is working and the main blocker shifted to config application.
+
+The local Docker Desktop live server was rebuilt/restarted after the config fix and is running for retest.
 
 - Server name configured in local env/config: `WickedServerContianer`
 - Local env file: `.env.local-live`
@@ -24,76 +26,81 @@ The local Docker Desktop live server is running for Conan Exiles client testing 
 - Workshop mod backend: `depotdownloader`
 - Workshop mods for this live run: none configured.
 - Container: `conan-exiles-container`
+- Current container ID prefix after restart: `0d172bef66ff`
 - Container status: running and healthy after restart.
 - Readiness: `StartPlay` found in recent compose logs.
 - Windows host LAN IPv4 found: `10.0.0.103/24` on `Ethernet 4`
 - Password values: stored only in ignored `.env.local-live` and generated local config; not committed.
 - Password leak check: no env password values found in recent Docker logs.
-- Current state: left running so the user can attempt direct LAN connect and server-browser testing from the other Conan Exiles client.
+- Current state: left running so the user can retest direct LAN connect and password prompt behavior from the other Conan Exiles client.
 
-Do not claim browser listing, direct LAN connection, password acceptance, or live login success until the user confirms the game client result.
+Do not claim password protection, browser listing, password acceptance, or live login success until the user confirms the game client result.
+
+## Root Cause And Fix
+
+Root cause found:
+
+- `.env.local-live` values were reaching Docker Compose and the container environment.
+- `SERVER_NAME`, `SERVER_PASSWORD`, and `ADMIN_PASSWORD` were present in the container.
+- The script wrote server name/password into `ServerSettings.ini`, but the running Linux server did not consume those keys for the startup report/password behavior.
+- Before the fix, `Engine.ini` section `[OnlineSubsystem]` had no `ServerName` and no `ServerPassword`.
+
+Fix implemented:
+
+- `scripts/configure-server.sh` now writes managed keys:
+  - `Engine.ini` / `[OnlineSubsystem]` / `ServerName`
+  - `Engine.ini` / `[OnlineSubsystem]` / `ServerPassword`
+- Existing `ServerSettings.ini` managed keys are still preserved and updated.
+- Blank password env values mean no password; non-blank env values are written on container startup.
+- Unrelated config keys are preserved.
 
 ## Work Performed This Pass
 
-- Added explicit query-port launch support with `FORCE_QUERY_PORT_ARG=true` default.
-- Added optional diagnostic launch env vars `MULTIHOME_IP` and `MULTIHOME_HTTP_IP`.
-- Updated `scripts/start-server.sh` to log redacted launch arguments and launch with `-QueryPort=<QUERY_PORT>` by default.
-- Created `tests/windows-firewall-conan-rules.ps1`.
-- Created `tests/local-lan-server-diagnostics.ps1`.
-- Added `docs/TROUBLESHOOTING_SERVER_LISTING.md`.
-- Updated `docs/LOCAL_LIVE_TEST.md`, `docs/CONFIG.md`, `README.md`, `PROJECT.md`, `PROJECT_MAP.md`, `AGENTS.md`, and this handoff.
-- Restarted/rebuilt the local live container after launch/env changes.
+- Added active `Engine.ini` `[OnlineSubsystem]` name/password writes.
+- Added `tests/local-env-effective-diagnostics.ps1`.
+- Added `tests/conan-config-effective-diagnostics.ps1`.
+- Updated `tests/local-lan-server-diagnostics.ps1` to fail on missing live env/config password keys, missing active config path, and default startup-report name.
+- Updated `AGENTS.md`, `PROJECT.md`, `PROJECT_MAP.md`, `README.md`, `docs/CONFIG.md`, `docs/LOCAL_LIVE_TEST.md`, `docs/TROUBLESHOOTING_SERVER_LISTING.md`, and this handoff.
+- Rebuilt/restarted the local live server with `docker compose --env-file .env.local-live up -d --build`.
 
 ## Validation Results This Pass
 
 Repository baseline checks:
 
-- `git status --short --branch`: worktree was dirty with in-progress LAN diagnostics edits when this resumed; changes were inspected before continuing.
+- `git status --short --branch`: clean at start.
 - `git branch --show-current`: `main`.
 - `git remote -v`: `origin https://github.com/bryans1981/ConanExilesContainer.git`.
-- `git log --oneline -5`: latest baseline at start was `c0c4d1d Add local live server test workflow`.
+- `git log --oneline -8`: latest baseline at start was `4c99bb7 Add LAN server listing diagnostics`.
 
-Static validation already passed before the final doc updates:
+Before-fix diagnostics:
 
-- Bash syntax checks in `ubuntu:24.04`: pass.
-- PowerShell parser checks for `tests/*.ps1`: pass.
-- `git diff --check`: pass.
-- `docker compose --env-file .env.local-live up -d --build`: pass.
+- `tests/local-env-effective-diagnostics.ps1 -EnvFile .env.local-live`: pass; env file, Compose config, and container env all had the expected masked values.
+- `tests/conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live`: failed as expected because active `Engine.ini` `[OnlineSubsystem]` had missing/blank server name/password keys.
 
-Live LAN diagnostics after restart:
+Post-fix live server validation:
 
-- `docker compose --env-file .env.local-live ps`: container running and healthy.
-- Docker-published ports:
-  - `7777/udp -> 0.0.0.0:7777`
-  - `7778/udp -> 0.0.0.0:7778`
-  - `27015/udp -> 0.0.0.0:27015`
-  - `25575/tcp -> 0.0.0.0:25575`
-- In-container listeners:
-  - `7777/udp`: observed.
-  - `7778/udp`: observed after query/pinger startup completed.
-  - `27015/udp`: observed after SourceServerQueries startup completed.
-  - `25575/tcp`: Docker-published, but not observed listening inside the container during this pass.
-- Host port owners:
-  - UDP `7777`, `7778`, and `27015`: `com.docker.backend`.
-  - TCP `25575`: `wslrelay` and `com.docker.backend`.
-- Windows Firewall:
-  - No specific inbound allow rule found for UDP `7777`.
-  - No specific inbound allow rule found for UDP `7778`.
-  - No specific inbound allow rule found for UDP `27015`.
-  - No specific inbound allow rule found for TCP `25575`.
-- Old host process candidates:
-  - No old Conan, Dedicated Server Launcher, or host SteamCMD process candidates found.
-- Log readiness/listing clues:
-  - `StartPlay` found.
-  - `LogInit: Command Line: -log -QueryPort=27015`.
-  - `Created socket for bind address: 0.0.0.0:7777`.
-  - `IpNetDriver listening on port 7777`.
-  - `SourceServerQueries` started on port `27015`.
-  - `Autologin attempt failed, unable to register server!`.
-  - `SteamSockets: Disabled due to no Steam OSS running.`
-  - Startup report still showed `Name=Conan Exiles Server` even though generated local config contains `ServerName=WickedServerContianer`.
-- `tests/local-lan-server-diagnostics.ps1 -EnvFile .env.local-live`: pass with warnings for missing firewall rules and RCON listener not observed.
-- `tests/windows-firewall-conan-rules.ps1 -EnvFile .env.local-live`: check-only pass; all four named rules reported missing; no firewall changes made.
+- Live server rebuilt and recreated successfully.
+- Readiness poll reached `StartPlay`.
+- Startup report appeared after the normal delay.
+- `tests/local-env-effective-diagnostics.ps1 -EnvFile .env.local-live`: pass, no warnings.
+- `tests/conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live`: pass, no warnings.
+- `tests/local-lan-server-diagnostics.ps1 -EnvFile .env.local-live`: pass with expected warnings for missing Windows Firewall rules and RCON listener not observed.
+
+Verified post-fix facts:
+
+- Active config path inside the container: `/serverdata/config/ConanSandbox/Saved/Config/LinuxServer`
+- Local active config path: `data\config\ConanSandbox\Saved\Config\LinuxServer`
+- `Engine.ini` `[OnlineSubsystem]` `ServerName`: `WickedServerContianer`
+- `Engine.ini` `[OnlineSubsystem]` `ServerPassword`: non-empty
+- `ServerSettings.ini` `[ServerSettings]` `ServerPassword`: non-empty
+- `ServerSettings.ini` `[ServerSettings]` `AdminPassword`: non-empty
+- `Engine.ini` `[URL]` `Port`: `7777`
+- `Engine.ini` `[OnlineSubsystemSteam]` `GameServerQueryPort`: `27015`
+- `ServerSettings.ini` `[ServerSettings]` `PingerPort`: `7778`
+- Startup report now shows `Name=WickedServerContianer`.
+- SourceServerQueries still starts on `27015`.
+- Docker still publishes `7777/udp`, `7778/udp`, `27015/udp`, and `25575/tcp`.
+- Password leak scan passed.
 
 Final validation completed before commit/push:
 
@@ -104,11 +111,13 @@ Final validation completed before commit/push:
 - `git diff --check`: pass with Git CRLF conversion warnings only.
 - `docker compose build`: pass.
 - `docker compose --env-file .env.local-live ps`: live Conan container running and healthy.
+- `tests/local-env-effective-diagnostics.ps1 -EnvFile .env.local-live`: pass, no warnings.
+- `tests/conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live`: pass, no warnings.
 - `tests/local-lan-server-diagnostics.ps1 -EnvFile .env.local-live`: pass with five warnings.
 - `tests/windows-firewall-conan-rules.ps1 -EnvFile .env.local-live`: check-only pass; no firewall rules changed.
-- Password leak scan through the LAN diagnostic helper: pass.
+- Cleanup check for named disposable containers `gracious_grothendieck` and `stoic_lamarr`: none present.
 
-## User Connection Checklist
+## User Retest Checklist
 
 From the other LAN client system:
 
@@ -118,22 +127,21 @@ Steam/query favorite if supported: 10.0.0.103:27015
 Server browser search: WickedServerContianer
 ```
 
-Enable:
+Retest direct connect first:
 
-- Show Invalid
-- Show Private
-- Show With Mods
-
-Use the local test password from `.env.local-live`.
+1. Try direct connect to `10.0.0.103:7777`.
+2. Confirm whether the password prompt appears.
+3. Enter the configured local test password from `.env.local-live`.
+4. Confirm whether the password is accepted or rejected.
+5. Confirm whether character creation/login reaches the server.
+6. Then search the browser for `WickedServerContianer` with Show Invalid, Show Private, and Show With Mods enabled.
 
 Report back:
 
-- Whether direct connect to `10.0.0.103:7777` works.
-- Whether query/favorite entry with `10.0.0.103:27015` works, if supported.
+- Whether direct LAN connect now requires a password.
+- Whether the configured local test password is accepted.
+- Whether character creation/login works.
 - Whether `WickedServerContianer` appears in the server browser.
-- Whether the password prompt appears.
-- Whether the password is accepted.
-- Whether character creation/login reaches the server.
 - Any exact client error text.
 - Whether connection attempts appear in Docker logs.
 
@@ -143,6 +151,13 @@ View status:
 
 ```powershell
 docker compose --env-file .env.local-live ps
+```
+
+Run env/config diagnostics:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live
 ```
 
 Run LAN diagnostics:
@@ -194,18 +209,16 @@ Do not delete `./data` during this live test unless the user explicitly wants to
 - Live server data was not deleted.
 - Live config, logs, backups, server files, and saves were not removed.
 - The live Conan container was intentionally left running.
-- Named containers `gracious_grothendieck` and `stoic_lamarr` were not present in `docker ps -a`, so no removal was needed.
-- An unrelated `secondagerevival-webclient` container was observed and not touched because it is outside this repo and was not one of the named cleanup targets.
 - Ignored `.env.local-live` and `./data` remain local and untracked.
+- No disposable test containers were intentionally left behind by this pass.
+- Named containers `gracious_grothendieck` and `stoic_lamarr` were not present in `docker ps -a`.
 
 ## Next Recommended Steps
 
-1. If direct LAN connect fails, apply the narrow Windows Firewall rules from Administrator PowerShell and retest.
-2. From the other LAN client, try direct connect to `10.0.0.103:7777`.
-3. If supported, try the query/favorite target `10.0.0.103:27015`.
-4. Search the server browser for `WickedServerContianer` with Show Invalid, Show Private, and Show With Mods enabled.
-5. Report exact client behavior and any errors.
-6. If direct connect works but browser listing still fails, continue investigating the registration warning, SteamSockets warning, and startup-report name mismatch.
+1. User retests direct LAN connect to `10.0.0.103:7777`.
+2. Confirm whether a password prompt appears and accepts the configured local test password.
+3. If password protection works, continue browser listing investigation only if `WickedServerContianer` still does not appear.
+4. If password protection still does not work, inspect the latest client behavior and Docker logs from the retest.
 
 ## Important Decisions
 
