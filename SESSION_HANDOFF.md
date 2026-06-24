@@ -7,8 +7,8 @@
 - Remote URL: `https://github.com/bryans1981/ConanExilesContainer.git`
 - GitHub visibility: private
 - Latest baseline commit before this pass: `1c434a3 Fix local live env config application`
+- Region fix commit created and pushed this pass: `15dd4ae Set local live server region`
 - Initial scaffold commit: `9ae5a6f Initial Conan Exiles container scaffold`
-- Commit planned for this pass: `Set local live server region`
 - GitHub automation blockers: none currently. `gh` is unavailable, but authenticated git/Git Credential Manager/API paths have worked for this repository.
 
 ## Current Live Test Status
@@ -118,6 +118,8 @@ Final validation completed before commit/push:
 - Secret string scan outside ignored local env/data/test-results: no matches.
 - `docker compose build`: pass.
 - `docker compose --env-file .env.local-live ps`: live Conan container running and healthy.
+- `git commit -m "Set local live server region"`: created `15dd4ae`.
+- `git push origin main`: pushed `15dd4ae` to `origin/main`.
 - `tests/local-env-effective-diagnostics.ps1 -EnvFile .env.local-live`: pass, no warnings.
 - `tests/conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live`: pass, no warnings.
 - `tests/local-lan-server-diagnostics.ps1 -EnvFile .env.local-live`: pass with six warnings for missing specific Windows Firewall rules, RCON listener not observed, and one host-side UDP 7778 endpoint visibility warning. In-container UDP `7778` was observed.
