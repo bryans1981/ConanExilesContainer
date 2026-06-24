@@ -4,7 +4,7 @@ Docker container project for a Conan Exiles dedicated server using native Linux 
 
 ## Overview
 
-This repository builds a local image that downloads, configures, backs up, optionally mods, and starts a Conan Exiles server. No public Docker Hub or GHCR image is published yet, so the compose examples use `build: .`.
+This repository builds a local image that downloads, configures, backs up, optionally mods, and starts a Conan Exiles server. Docker Hub publishing workflow support is ready, but the image has not been pushed yet, so the default local compose example still uses `build: .`.
 
 DepotDownloader is the default download backend for both server files and Workshop mods. SteamCMD remains available as an explicit troubleshooting or host-specific option.
 
@@ -13,6 +13,8 @@ DepotDownloader is the default download backend for both server files and Worksh
 - Local Docker Desktop MVP flow is verified with the default DepotDownloader backend.
 - Real AppID `443030` Linux server files were downloaded and launched through the native Linux launcher.
 - Local LAN client testing is confirmed for login, server name, server password, admin password, and America/North America region display.
+- Automated local durability testing is available in `tests/local-durability.ps1`.
+- Docker Hub build/tag/push tooling is prepared for `bryans1981/conanexilescontainer`, but no published image is claimed yet.
 - Docker Engine `29.4.2` builtin seccomp blocks Linux SteamCMD on this host; DepotDownloader avoids that blocker.
 - Rocky Linux, Unraid, long-running public behavior, and multi-mod pruning still need later validation.
 - Wine and the WebGUI are not part of the MVP.
@@ -67,6 +69,43 @@ services:
 ```
 
 The checked-in compose file already reads `.env` through Compose variable substitution, so `docker compose up -d` is enough for the normal local flow.
+
+## Docker Hub Image
+
+Docker Hub publishing is prepared for this target:
+
+```text
+bryans1981/conanexilescontainer:latest
+```
+
+Do not switch production or Unraid hosts to the Docker Hub image until it has actually been pushed.
+
+After publish, this compose shape can use the registry image instead of local `build: .`:
+
+```yaml
+services:
+  conan:
+    image: bryans1981/conanexilescontainer:latest
+    container_name: conan-exiles-container
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "7777:7777/udp"
+      - "7778:7778/udp"
+      - "27015:27015/udp"
+      - "25575:25575/tcp"
+    volumes:
+      - ./data/serverfiles:/serverdata/serverfiles
+      - ./data/steam:/serverdata/steam
+      - ./data/config:/serverdata/config
+      - ./data/logs:/serverdata/logs
+      - ./data/backups:/serverdata/backups
+```
+
+For Unraid after publish, use the Docker Hub image, map the same ports and volumes, and override environment variables in the Unraid UI.
+
+See [docs/DOCKERHUB.md](docs/DOCKERHUB.md).
 
 ## Docker Run
 
@@ -182,6 +221,7 @@ docker compose down
 Local live diagnostics:
 
 ```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-durability.ps1 -EnvFile .env.local-live -Quick -KeepRunning
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-live-status.ps1 -EnvFile .env.local-live
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-lan-server-diagnostics.ps1 -EnvFile .env.local-live
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live
@@ -195,10 +235,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effecti
 - SteamCMD and Docker seccomp checks: [docs/TROUBLESHOOTING_STEAMCMD.md](docs/TROUBLESHOOTING_STEAMCMD.md)
 - Local Docker Desktop notes: [docs/LOCAL_DOCKER_DESKTOP.md](docs/LOCAL_DOCKER_DESKTOP.md)
 - Rocky Linux notes: [docs/ROCKY_LINUX.md](docs/ROCKY_LINUX.md)
+- Docker Hub publishing: [docs/DOCKERHUB.md](docs/DOCKERHUB.md)
 
 ## Roadmap
 
-- Verify Rocky Linux and Unraid deployments.
+- Publish the Docker Hub image after login/repository checks and explicit final approval.
+- Use the Docker Hub image for Unraid setup after publish.
+- Keep Rocky Linux skipped until its ports are open and the user asks to resume it.
 - Verify multi-mod ordering, removal, and pruning with real mods.
 - Observe longer-running public server behavior.
 - Add Phase 2 WebGUI later.

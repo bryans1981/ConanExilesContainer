@@ -18,6 +18,14 @@ docker compose down
 
 For live game-client testing on the local Windows host, use `docs/LOCAL_LIVE_TEST.md` instead of moving to Rocky Linux or starting WebGUI work.
 
+For Step 4 durability testing against the current local live server, use the PowerShell durability helper:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-durability.ps1 -EnvFile .env.local-live -Quick -KeepRunning
+```
+
+The helper does not delete live data. It validates compose config, current status, readiness, active config, ports, persistence, backup creation, restart durability, modlist validity, and password leak checks.
+
 ## Required Checklist
 
 - Build image locally.
@@ -38,6 +46,7 @@ For live game-client testing on the local Windows host, use `docs/LOCAL_LIVE_TES
 - Confirm backups are created before update when enabled.
 - Confirm backup retention does not delete new backups.
 - Confirm logs do not expose passwords.
+- Run `tests/local-durability.ps1` before moving from local Docker Desktop work to image publishing.
 - Confirm `AGENTS.md`, `PROJECT.md`, `PROJECT_MAP.md`, and `SESSION_HANDOFF.md` reflect current status.
 
 ## Current Local Status
@@ -71,6 +80,7 @@ For live game-client testing on the local Windows host, use `docs/LOCAL_LIVE_TES
 - Clean disposable compose e2e with DepotDownloader defaults passed: server download, config generation, test password application without retained-log leaks, Workshop mod download, modlist generation, `StartPlay`, graceful shutdown, restart persistence, and backup creation.
 - Local live-client workflow uses the committed safe `.env` as a template for ignored `.env.local-live` and `tests/local-live-status.ps1`.
 - User-confirmed local live-client results: LAN client can see the server, log in, use server/admin passwords, see the correct server name, and see America/North America region.
+- Local durability automation is now available through `tests/local-durability.ps1`; PowerShell is the primary Docker Desktop Windows path, and `tests/local-durability.sh` is available for compatible Bash environments.
 - Remaining local checks: multi-mod ordering, mod removal/pruning, and longer-running server behavior.
 
 External metadata checked June 23, 2026:

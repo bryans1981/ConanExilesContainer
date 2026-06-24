@@ -15,8 +15,10 @@ Create a simple Docker container project for running a Conan Exiles Enhanced ded
 ## Development Target Order
 
 1. Docker Desktop local
-2. Rocky Linux Docker host
-3. Generic Docker deployment
+2. Docker Hub image publish
+3. Unraid from the Docker Hub image
+4. Rocky Linux Docker host, skipped until its ports are open
+5. Generic Docker deployment
 
 The local Codex host has public internet access but no LAN access. LAN, Rocky Linux, and Unraid connectivity tests must be run from those target hosts later.
 
@@ -95,6 +97,9 @@ Remaining validation beyond MVP smoke coverage:
 - The diagnostic compose override `docker-compose.steamcmd-unconfined.diagnostic.yml` renders successfully and is available only as a diagnostic/emergency workaround.
 - User confirmed from another LAN Conan Exiles client that the live Docker server can be seen, direct login works, server name is correct, and passwords work.
 - User confirmed the region display is corrected to America/North America after setting `SERVER_REGION=America`/`serverRegion=1`.
+- Automated local durability testing now exists in `tests/local-durability.ps1` for Docker Desktop Windows and `tests/local-durability.sh` for compatible Bash environments.
+- Docker Hub publishing workflow support now exists in `scripts/dockerhub-build-push.ps1` and `docs/DOCKERHUB.md` for `docker.io/bryans1981/conanexilescontainer`.
+- The Docker Hub image has not been pushed or verified as available yet.
 
 ## Current SteamCMD Blocker
 
@@ -238,6 +243,7 @@ Verified public test item: `3720546346` (`[Enhanced] Unlimited Weight`).
 ## Testing Requirements
 
 - Build the image locally.
+- Run `tests/local-durability.ps1` against the ignored local live env before Docker Hub publishing.
 - Run clean first boot with empty/disposable data folders.
 - Confirm server files download with the selected backend.
 - Confirm native Linux launcher/executable exists.
@@ -251,6 +257,23 @@ Verified public test item: `3720546346` (`[Enhanced] Unlimited Weight`).
 - Confirm project-control docs are current.
 - For live client testing, follow `docs/LOCAL_LIVE_TEST.md` and leave the server running for the user when it reaches readiness.
 - Run `tests/steamcmd-connectivity.ps1` or `tests/steamcmd-connectivity.sh` when SteamCMD anonymous login or AppID download fails.
+
+## Docker Hub Publishing
+
+Docker Hub is the next deployment target after local durability testing. Target repository:
+
+```text
+docker.io/bryans1981/conanexilescontainer
+```
+
+Prepared tags:
+
+- `bryans1981/conanexilescontainer:latest`
+- `bryans1981/conanexilescontainer:<short-git-sha>`
+
+Use `scripts/dockerhub-build-push.ps1` for dry-run, build/tag, and explicit `-Push` publishing. Do not claim the image exists until a push succeeds and the tag can be pulled. After publish, Unraid should use the Docker Hub image with port/volume mappings and environment variable overrides in the Unraid UI.
+
+Rocky Linux remains skipped for now because its ports are not open.
 
 ## Phase 2 WebGUI Notes
 

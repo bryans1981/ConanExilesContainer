@@ -33,6 +33,7 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `scripts/backup.sh`: timestamped archive creation and retention cleanup.
 - `scripts/start-server.sh`: native launcher/executable discovery, redacted launch-argument logging, explicit query-port argument support, optional multihome launch arguments, and foreground server launch. The verified downloaded launcher is `ConanSandboxServer.sh`; fallback direct executable is `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
 - `scripts/healthcheck.sh`: server process healthcheck.
+- `scripts/dockerhub-build-push.ps1`: Docker Hub helper for dry-run, build/tag, and explicit `-Push` publishing to `docker.io/bryans1981/conanexilescontainer`.
 - `tests/steamcmd-connectivity.ps1`: Windows/PowerShell SteamCMD connectivity diagnostics for host public internet, container networking/DNS, project image SteamCMD, upstream SteamCMD, DNS overrides, and optional host networking.
 - `tests/steamcmd-connectivity.sh`: Bash SteamCMD connectivity diagnostics for compatible Linux/macOS/Git Bash shells.
 - `tests/depotdownloader-connectivity.ps1`: Windows/PowerShell DepotDownloader diagnostics for pinned release reachability, image-installed binary version, AppID `443030` manifest-only access, and bounded explicit DepotDownloader app update.
@@ -41,6 +42,8 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `tests/steamcmd-security-diagnostics.ps1`: Windows/PowerShell Docker security diagnostics for Docker version/info/context, default seccomp, diagnostic `seccomp=unconfined`, optional custom seccomp profile, project image, upstream image, and optional host networking.
 - `tests/steamcmd-security-diagnostics.sh`: Bash Docker security diagnostics for compatible Linux/macOS/Git Bash shells.
 - `tests/local-live-status.ps1`: Windows/PowerShell local live-server status helper for compose service state, published ports, recent `StartPlay`, password leak scan, and local data disk usage.
+- `tests/local-durability.ps1`: primary Windows/PowerShell Step 4 local durability helper for compose config, live status, readiness, active config, password-key presence, published ports, graceful stop/start, persistence, backup creation, update-on-start durability, modlist validity, and password leak scan.
+- `tests/local-durability.sh`: optional compatible Bash local durability helper for non-Windows shells.
 - `tests/local-lan-server-diagnostics.ps1`: Windows/PowerShell LAN-client listing/connectivity diagnostic for host LAN IPv4 addresses, Docker published ports, in-container sockets, host port owners, Windows Firewall rule status, listing/query log clues, password leak scan, disk usage, and exact other-LAN-client test steps.
 - `tests/local-env-effective-diagnostics.ps1`: Windows/PowerShell masked local env diagnostic for env-file values, compose effective environment, container environment, and local live name/password presence.
 - `tests/conan-config-effective-diagnostics.ps1`: Windows/PowerShell masked active Conan config diagnostic for active config path, `Engine.ini` `[OnlineSubsystem]` name/password, ports, `ServerSettings.ini` admin/password values, and key inventory.
@@ -94,9 +97,11 @@ Local Docker Desktop paths:
 - The local live launch command includes `-QueryPort=27015` when `FORCE_QUERY_PORT_ARG=true`.
 - `MULTIHOME_IP` and `MULTIHOME_HTTP_IP` exist for diagnostics but should remain empty unless host/IP binding is being explicitly tested.
 - User confirmed direct LAN connect, correct server name, password behavior, admin password behavior, and America/North America region display from another Conan Exiles client. The env reached the container; `SERVER_NAME` and `SERVER_PASSWORD` are written to active `Engine.ini` `[OnlineSubsystem]`, and `SERVER_REGION=America` resolves to `serverRegion=1`.
+- Local durability automation exists through `tests/local-durability.ps1` and optional Bash helper `tests/local-durability.sh`.
+- Docker Hub publishing is prepared for `docker.io/bryans1981/conanexilescontainer`, but no published image is claimed until a push succeeds.
 - Auto update loops are not active in MVP.
 
-Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Linux, and Unraid still need later verification.
+Docker Hub publishing is the next target after local durability. Unraid setup follows Docker Hub publish. Rocky Linux is skipped for now because its ports are not open. Multi-mod ordering, mod removal/pruning, and long-running server behavior still need later verification.
 
 ## Documentation
 
@@ -105,6 +110,7 @@ Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Lin
 - `docs/BACKUPS.md`: backup and restore basics.
 - `docs/LOCAL_DOCKER_DESKTOP.md`: local test procedure and current status.
 - `docs/LOCAL_LIVE_TEST.md`: local Docker Desktop live-client test workflow, LAN-client connection checklist, diagnostics, and firewall helper commands.
+- `docs/DOCKERHUB.md`: Docker Hub publishing workflow. The image is prepared but not claimed as published until a push succeeds.
 - `docs/ROCKY_LINUX.md`: Rocky Linux deployment/test notes.
 - `docs/WEBGUI_PHASE_2.md`: future WebGUI design.
 - `docs/TROUBLESHOOTING_STEAMCMD.md`: SteamCMD/Docker Desktop connectivity blocker explanation and diagnostic workflow.
@@ -116,3 +122,10 @@ Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Lin
 - `AGENTS.md`: permanent automation-first GitHub rules for agents.
 - `PROJECT.md`: repository name, expected owner/remote, and private visibility expectation.
 - `SESSION_HANDOFF.md`: latest branch, commit, remote URL, repo creation status, push status, and any GitHub automation blockers.
+
+## Current Deployment Order
+
+1. Local Docker Desktop durability testing.
+2. Docker Hub image publish to `docker.io/bryans1981/conanexilescontainer`.
+3. Unraid setup using the Docker Hub image and UI variable overrides.
+4. Rocky Linux later, after its ports are open and the user asks to resume it.

@@ -72,6 +72,12 @@ Run the local status helper:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-live-status.ps1 -EnvFile .env.local-live
 ```
 
+Run the local durability helper before publishing or moving to another host:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-durability.ps1 -EnvFile .env.local-live -Quick -KeepRunning
+```
+
 Run the LAN-focused diagnostic helper:
 
 ```powershell
@@ -93,6 +99,8 @@ The helper checks:
 - Recent fatal startup patterns.
 - Password value leaks in retained logs.
 - Local `data/` disk usage.
+
+The durability helper additionally checks graceful stop/start behavior, active config persistence, save/config directory persistence, backup creation, `UPDATE_SERVER_ON_START` durability, and modlist path validity. It does not delete live server data.
 
 The LAN diagnostic additionally checks:
 
