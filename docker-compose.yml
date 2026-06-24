@@ -46,8 +46,4 @@ services:
       # Reserved for the future Phase 2 WebGUI. The MVP does not run a web service.
       # - "8080:8080/tcp"
     volumes:
-      - ./data/serverfiles:/serverdata/serverfiles
-      - ./data/steam:/serverdata/steam
-      - ./data/config:/serverdata/config
-      - ./data/logs:/serverdata/logs
-      - ./data/backups:/serverdata/backups
+      - ./data:/serverdata

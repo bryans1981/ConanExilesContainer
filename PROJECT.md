@@ -44,7 +44,8 @@ Remaining validation beyond MVP smoke coverage:
 - `auto` tries DepotDownloader first, then logs failure and tries SteamCMD.
 - Native Linux launcher/executable detection.
 - Clear failure if no native Linux executable exists.
-- Persistent server files, Steam/cache, config, logs, backups, and mod data through mapped volumes.
+- Persistent server files, Steam/cache, config, logs, backups, and mod data through a single root data volume.
+- Single root data mount support: `./data:/serverdata`; the container creates missing subfolders and preserves existing contents.
 - Environment-driven common server settings.
 - Workshop mod download/update from ordered comma-separated IDs.
 - Conan mod list generation in the configured order.
@@ -99,7 +100,7 @@ Remaining validation beyond MVP smoke coverage:
 - User confirmed the region display is corrected to America/North America after setting `SERVER_REGION=America`/`serverRegion=1`.
 - Automated local durability testing now exists in `tests/local-durability.ps1` for Docker Desktop Windows and `tests/local-durability.sh` for compatible Bash environments.
 - Docker Hub publishing workflow support exists in `scripts/dockerhub-build-push.ps1` and `docs/DOCKERHUB.md` for `docker.io/bryans1981/conanexilescontainer`.
-- The Docker Hub image is pushed and pull-verified as `bryans1981/conanexilescontainer:latest` and `bryans1981/conanexilescontainer:4f827cb230ce`.
+- The Docker Hub image is pushed and pull-verified as `bryans1981/conanexilescontainer:latest` with short Git SHA tags for pushed revisions.
 
 ## Current SteamCMD Blocker
 
@@ -220,11 +221,15 @@ User confirmed after that fix that the client could log in, see the correct serv
 
 Local development volumes:
 
-- `./data/serverfiles:/serverdata/serverfiles`
-- `./data/steam:/serverdata/steam`
-- `./data/config:/serverdata/config`
-- `./data/logs:/serverdata/logs`
-- `./data/backups:/serverdata/backups`
+- `./data:/serverdata`
+
+The container creates these subfolders on startup when missing and does not overwrite existing contents:
+
+- `serverfiles`
+- `steam`
+- `config`
+- `logs`
+- `backups`
 
 ## Backup Behavior
 
@@ -269,9 +274,9 @@ docker.io/bryans1981/conanexilescontainer
 Pushed tags:
 
 - `bryans1981/conanexilescontainer:latest`
-- `bryans1981/conanexilescontainer:4f827cb230ce`
+- `bryans1981/conanexilescontainer:<short-git-sha>`
 
-Pull verification passed with `docker pull bryans1981/conanexilescontainer:latest`; Docker reported digest `sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6`.
+Pull verification must pass with `docker pull bryans1981/conanexilescontainer:latest` after each publish.
 
 Use `scripts/dockerhub-build-push.ps1` for future dry-run, build/tag, and explicit `-Push` publishing. Unraid should now use the Docker Hub image with port/volume mappings and environment variable overrides in the Unraid UI.
 

@@ -48,11 +48,7 @@ services:
       - "27015:27015/udp"
       - "25575:25575/tcp"
     volumes:
-      - ./data/serverfiles:/serverdata/serverfiles
-      - ./data/steam:/serverdata/steam
-      - ./data/config:/serverdata/config
-      - ./data/logs:/serverdata/logs
-      - ./data/backups:/serverdata/backups
+      - ./data:/serverdata
 ```
 
 The checked-in compose file already reads `.env` through Compose variable substitution, so `docker compose up -d` is enough for the normal local flow.
@@ -74,11 +70,7 @@ docker run -d --name conan-exiles-container --restart unless-stopped `
   -p 7778:7778/udp `
   -p 27015:27015/udp `
   -p 25575:25575/tcp `
-  -v ${PWD}/data/serverfiles:/serverdata/serverfiles `
-  -v ${PWD}/data/steam:/serverdata/steam `
-  -v ${PWD}/data/config:/serverdata/config `
-  -v ${PWD}/data/logs:/serverdata/logs `
-  -v ${PWD}/data/backups:/serverdata/backups `
+  -v ${PWD}/data:/serverdata `
   conan-exiles-container:local
 ```
 
@@ -96,11 +88,7 @@ docker run -d --name conan-exiles-container --restart unless-stopped `
 
 | Host path | Container path | Contents |
 | --- | --- | --- |
-| `./data/serverfiles` | `/serverdata/serverfiles` | Server install, saves, generated game data |
-| `./data/steam` | `/serverdata/steam` | SteamCMD cache and Workshop downloads |
-| `./data/config` | `/serverdata/config` | Persistent Conan config |
-| `./data/logs` | `/serverdata/logs` | Container and server logs |
-| `./data/backups` | `/serverdata/backups` | Backup archives |
+| `./data` | `/serverdata` | Root data folder; the container creates `serverfiles`, `steam`, `config`, `logs`, and `backups` when missing and preserves existing contents |
 
 Do not delete `./data` unless you intend to remove local server files, saves, config, logs, Steam cache, mods, and backups.
 

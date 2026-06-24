@@ -56,7 +56,7 @@ RUN if ! getent group conan >/dev/null 2>&1; then groupadd -r conan; fi \
 COPY scripts/ /scripts/
 RUN chmod +x /scripts/*.sh
 
-VOLUME ["/serverdata/serverfiles", "/serverdata/steam", "/serverdata/config", "/serverdata/logs", "/serverdata/backups"]
+VOLUME ["/serverdata"]
 
 WORKDIR /serverdata
 

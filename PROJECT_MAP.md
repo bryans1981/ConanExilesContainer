@@ -61,6 +61,10 @@ Container paths:
 
 Local Docker Desktop paths:
 
+- `./data`, mounted to `/serverdata`
+
+The entrypoint creates these subfolders when missing and preserves existing contents:
+
 - `./data/serverfiles`
 - `./data/steam`
 - `./data/config`
@@ -110,7 +114,7 @@ Unraid setup is the next target after Docker Hub publish. Rocky Linux is skipped
 - `docs/BACKUPS.md`: backup and restore basics.
 - `docs/LOCAL_DOCKER_DESKTOP.md`: local test procedure and current status.
 - `docs/LOCAL_LIVE_TEST.md`: local Docker Desktop live-client test workflow, LAN-client connection checklist, diagnostics, and firewall helper commands.
-- `docs/DOCKERHUB.md`: Docker Hub publishing workflow and current pushed tags/pull verification result.
+- `docs/DOCKERHUB.md`: Docker Hub publishing workflow, tag pattern, pull verification requirement, and post-publish compose example.
 - `docs/ROCKY_LINUX.md`: Rocky Linux deployment/test notes.
 - `docs/WEBGUI_PHASE_2.md`: future WebGUI design.
 - `docs/TROUBLESHOOTING_STEAMCMD.md`: SteamCMD/Docker Desktop connectivity blocker explanation and diagnostic workflow.

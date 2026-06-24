@@ -1,6 +1,6 @@
 # Docker Hub Publishing
 
-Docker Hub publishing is complete for this repository. The image was built, tagged, pushed, and pull-verified from an authenticated Docker Hub session on June 24, 2026.
+Docker Hub publishing is complete for this repository. The image is built, tagged, pushed, and pull-verified from authenticated Docker Hub sessions.
 
 Target image:
 
@@ -12,10 +12,8 @@ Pushed tags:
 
 ```text
 bryans1981/conanexilescontainer:latest
-bryans1981/conanexilescontainer:4f827cb230ce
+bryans1981/conanexilescontainer:<short-git-sha>
 ```
-
-Both pushed tags resolved to digest `sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6`.
 
 Semantic version tags can be added later after release versioning exists.
 
@@ -27,12 +25,7 @@ Pull verification passed:
 docker pull bryans1981/conanexilescontainer:latest
 ```
 
-Result:
-
-```text
-Digest: sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6
-Status: Image is up to date for bryans1981/conanexilescontainer:latest
-```
+Pull must succeed before marking a publish complete.
 
 ## Preconditions
 
@@ -97,11 +90,7 @@ services:
       - "27015:27015/udp"
       - "25575:25575/tcp"
     volumes:
-      - ./data/serverfiles:/serverdata/serverfiles
-      - ./data/steam:/serverdata/steam
-      - ./data/config:/serverdata/config
-      - ./data/logs:/serverdata/logs
-      - ./data/backups:/serverdata/backups
+      - ./data:/serverdata
 ```
 
-Next step: set up Unraid using the Docker Hub image, map the same ports and volumes, and set environment variables in the Unraid UI.
+Next step: set up Unraid using the Docker Hub image, map the same ports and root data volume, and set environment variables in the Unraid UI.

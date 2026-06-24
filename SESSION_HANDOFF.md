@@ -6,9 +6,9 @@
 - Remote name: `origin`
 - Remote URL: `https://github.com/bryans1981/ConanExilesContainer.git`
 - GitHub visibility: private
-- Latest confirmed baseline before Docker Hub republish: `4f827cb Set backup on stop default`
-- Local and remote baseline check before publish: `git status --short --branch` returned `## main...origin/main`
-- Commit message for this handoff/status update: `Publish Docker Hub image`
+- Latest confirmed baseline before root-volume work: `3c9f5cd Add Conan Exiles image`
+- Local and remote baseline check before root-volume work: `git rev-list --left-right --count HEAD...origin/main` returned `0 0`
+- Commit message for this root-volume pass: `Use single root data volume`
 - GitHub automation blockers: none currently. `gh` is unavailable, but authenticated git/Git Credential Manager/API paths have worked for this repository.
 
 ## Current Live Server Status
@@ -30,17 +30,13 @@ Use `docker compose --env-file .env.local-live ...` for continued live-server wo
 
 ## Work Performed This Pass
 
-- Added `tests/local-durability.ps1` as the primary Docker Desktop Windows Step 4 durability helper.
-- Added optional `tests/local-durability.sh` for compatible Bash environments.
-- Added `scripts/dockerhub-build-push.ps1` for Docker Hub dry-run, build/tag, and explicit `-Push` publishing.
-- Added `docs/DOCKERHUB.md` with target repository, dry-run/build/push commands, tag plan, and post-publish compose example.
-- Updated `README.md` with the local durability command and a planned/ready Docker Hub image section without claiming the image has been pushed.
-- Updated `docs/LOCAL_DOCKER_DESKTOP.md` and `docs/LOCAL_LIVE_TEST.md` with durability workflow notes.
-- Updated `PROJECT.md` and `PROJECT_MAP.md` so the next target order is local durability, Docker Hub publish, Unraid after publish, then Rocky later after ports are open.
+- Changed `docker-compose.yml` from five subfolder bind mounts to one root bind mount: `./data:/serverdata`.
+- Changed the Dockerfile volume declaration from the five subfolder volumes to `VOLUME ["/serverdata"]`.
+- Updated only the README volume-related snippets/section to show the single root mount.
+- Updated `docs/DOCKERHUB.md`, `PROJECT.md`, and `PROJECT_MAP.md` to reflect the root data volume model.
+- Verified the entrypoint creates missing `serverfiles`, `steam`, `config`, `logs`, and `backups` subfolders and preserves existing files.
+- Recreated the local live compose container with the new root mount and kept live data intact.
 - Did not update `AGENTS.md`; no new permanent agent rule was needed.
-- Published the Docker Hub image to `docker.io/bryans1981/conanexilescontainer`.
-- Changed the committed and container fallback default for `BACKUP_ON_STOP` to `true`.
-- Copied the current `README.md` to the Docker Hub repository overview using `chko/docker-pushrm:latest`.
 - Did not delete live server data, saves, config, logs, Steam cache, mods, or backups.
 
 ## Validation Results This Pass
@@ -50,7 +46,7 @@ Repository and runtime baseline:
 - `git status --short`: clean at start.
 - `git branch --show-current`: `main`.
 - `git remote -v`: `origin https://github.com/bryans1981/ConanExilesContainer.git`.
-- `git log --oneline -8`: latest baseline was `a08296e Add safe env defaults and clean README`.
+- Latest baseline before root-volume work: `3c9f5cd Add Conan Exiles image`.
 - `docker compose ps`: live Conan container running and healthy at start.
 
 Static/build validation:
@@ -58,16 +54,27 @@ Static/build validation:
 - `docker compose config --quiet`: pass.
 - `docker compose --env-file .env config --quiet`: pass.
 - `docker compose --env-file .env.local-live config --quiet`: pass.
-- PowerShell parser checks for `tests/*.ps1` and `scripts/*.ps1`: pass, 11 scripts parsed.
-- Bash syntax checks for `scripts/*.sh` and `tests/*.sh`: pass, 13 scripts checked.
+- `scripts/dockerhub-build-push.ps1` parser check: pass.
+- `bash -n scripts/entrypoint.sh` and `bash -n scripts/common.sh`: pass.
 - `git diff --check`: pass with expected Git CRLF conversion warnings only.
 - `docker compose build`: pass.
-- `scripts/dockerhub-build-push.ps1` dry run: pass before and after local commit, no push attempted.
 
-Local durability validation:
+Root-volume smoke validation:
+
+- Disposable smoke path: ignored `test-results/volume-root-smoke-*`.
+- Command shape: `docker run --rm -v <disposable-data>:/serverdata conan-exiles-container:local bash -lc ...`.
+- Result: pass.
+- Verified `serverfiles`, `steam`, `config`, `logs`, and `backups` are created when missing.
+- Verified an existing `config/sentinel.txt` file is preserved.
+- Verified the SteamCMD home seed is populated under the root-mounted `steam` folder.
+- Cleanup: disposable smoke folder removed.
+
+Local live root-volume validation:
 
 - Command run: `powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-durability.ps1 -EnvFile .env.local-live -Quick -KeepRunning -SkipClientReminder`
 - Result: pass, `failures=0 warnings=0`.
+- Before durability, `docker compose --env-file .env.local-live up -d` recreated the container with the new single root mount.
+- Verified Docker mount: `D:\Git Local\ConanExilesContainer\data -> /serverdata`.
 - Verified compose config with default `.env` and `.env.local-live`.
 - Verified current container was running before the test.
 - Verified `StartPlay` readiness before and after graceful restart.
@@ -100,10 +107,10 @@ Docker Hub image is available at:
 docker.io/bryans1981/conanexilescontainer
 ```
 
-Pushed tags:
+Pushed tags from the previous publish:
 
 - `bryans1981/conanexilescontainer:latest`
-- `bryans1981/conanexilescontainer:4f827cb230ce`
+- `bryans1981/conanexilescontainer:<short-git-sha>`
 
 Publish status on June 24, 2026:
 
@@ -114,8 +121,6 @@ Publish status on June 24, 2026:
 - Docker CLI config exists and uses credential store `desktop`.
 - `docker-credential-desktop list`: helper available with Docker Hub/index.docker.io entries.
 - `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dockerhub-build-push.ps1 -Push`: pass.
-- `latest` digest: `sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6`.
-- `4f827cb230ce` digest: `sha256:58129da33a0ca175b664cc7a8c42291a9ac03da4dfc0ec7a7419c5b03394dfa6`.
 - Pull verification command: `docker pull bryans1981/conanexilescontainer:latest`.
 - Pull verification result: pass; Docker reported `Status: Image is up to date for bryans1981/conanexilescontainer:latest`.
 - Docker Hub repository overview update: pass; Docker Hub API readback showed `full_description` exactly matches local `README.md` and the short description is set.
