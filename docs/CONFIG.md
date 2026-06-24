@@ -68,7 +68,7 @@ DepotDownloader support is verified for server AppID `443030` and for Workshop i
 | --- | --- | --- |
 | `BACKUP_LOCATION` | `/serverdata/backups` | Backup archive directory. |
 | `BACKUP_ON_START` | `true` | Backs up before startup update/mod operations when data exists. |
-| `BACKUP_ON_STOP` | `false` | Backs up during graceful shutdown. |
+| `BACKUP_ON_STOP` | `true` | Backs up during graceful shutdown. |
 | `BACKUP_RETENTION_DAYS` | `14` | Deletes older backups when positive. `0` disables cleanup. |
 
 ## Launch Variables

@@ -106,7 +106,7 @@ log_effective_settings() {
     log "Server: name='${SERVER_NAME:-Conan Exiles Server}', max_players=${MAX_PLAYERS:-40}, ports game=${GAME_PORT:-7777}/udp pinger=${PINGER_PORT:-7778}/udp query=${QUERY_PORT:-27015}/udp rcon=${RCON_PORT:-25575}/tcp"
     log "Passwords: server_password=$(redacted_state "${SERVER_PASSWORD:-}"), admin_password=$(redacted_state "${ADMIN_PASSWORD:-}"), rcon_password=$(redacted_state "${RCON_PASSWORD:-}")"
     log "Updates: server_on_start=${UPDATE_SERVER_ON_START:-true}, validate=${VALIDATE_SERVER_FILES:-false}, mods_on_start=${UPDATE_MODS_ON_START:-true}, auto_game_update=${AUTO_GAME_UPDATE:-false}, auto_mod_update=${AUTO_MOD_UPDATE:-false}"
-    log "Backups: location=${BACKUP_LOCATION}, on_start=${BACKUP_ON_START:-true}, on_stop=${BACKUP_ON_STOP:-false}, retention_days=${BACKUP_RETENTION_DAYS:-14}"
+    log "Backups: location=${BACKUP_LOCATION}, on_start=${BACKUP_ON_START:-true}, on_stop=${BACKUP_ON_STOP:-true}, retention_days=${BACKUP_RETENTION_DAYS:-14}"
 }
 
 run_start_backup_if_needed() {
@@ -154,7 +154,7 @@ shutdown_server() {
         wait "$SERVER_CHILD_PID" || exit_code=$?
     fi
 
-    if is_true "BACKUP_ON_STOP" "${BACKUP_ON_STOP:-false}"; then
+    if is_true "BACKUP_ON_STOP" "${BACKUP_ON_STOP:-true}"; then
         log "Creating backup during shutdown."
         run_as_server_user /scripts/backup.sh "shutdown" || true
     fi

@@ -186,7 +186,7 @@ Do not delete `./data` unless you intend to remove local server files, saves, co
 | `WORKSHOP_MOD_IDS` | empty | Comma-separated ordered Workshop item IDs |
 | `PRUNE_REMOVED_MODS` | `true` | Remove old downloaded mods no longer listed |
 | `BACKUP_ON_START` | `true` | Backup before startup update/mod operations |
-| `BACKUP_ON_STOP` | `false` | Backup during graceful shutdown |
+| `BACKUP_ON_STOP` | `true` | Backup during graceful shutdown |
 | `BACKUP_RETENTION_DAYS` | `14` | Delete older backups; `0` disables cleanup |
 | `EXTRA_ARGS` | empty | Extra launch arguments; do not put secrets here |
 

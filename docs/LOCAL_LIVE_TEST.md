@@ -34,7 +34,7 @@ UPDATE_SERVER_ON_START=true
 UPDATE_MODS_ON_START=true
 WORKSHOP_MOD_IDS=
 BACKUP_ON_START=true
-BACKUP_ON_STOP=false
+BACKUP_ON_STOP=true
 ```
 
 The local env file is intentionally ignored by git and Docker build context. Do not commit real local test passwords.

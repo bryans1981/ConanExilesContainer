@@ -204,7 +204,7 @@ User confirmed after that fix that the client could log in, see the correct serv
 | `PRUNE_REMOVED_MODS` | `true` | Remove no-longer-listed downloaded mods | Steam Workshop content directory |
 | `BACKUP_LOCATION` | `/serverdata/backups` | Backup archive directory | Backup script |
 | `BACKUP_ON_START` | `true` | Backup before startup update/mod operations | Backup script |
-| `BACKUP_ON_STOP` | `false` | Backup during graceful shutdown | Entrypoint shutdown |
+| `BACKUP_ON_STOP` | `true` | Backup during graceful shutdown | Entrypoint shutdown |
 | `BACKUP_RETENTION_DAYS` | `14` | Delete older backup archives when positive | Backup script |
 | `EXTRA_ARGS` | empty | Extra server launch args, split on spaces | Launch command |
 
