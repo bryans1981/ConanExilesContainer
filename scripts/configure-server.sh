@@ -137,6 +137,7 @@ EOF
 
 main() {
     local max_players="${MAX_PLAYERS:-40}"
+    local server_region="${SERVER_REGION:-1}"
     local game_port="${GAME_PORT:-7777}"
     local pinger_port="${PINGER_PORT:-7778}"
     local query_port="${QUERY_PORT:-27015}"
@@ -152,6 +153,10 @@ main() {
     local game_ini
 
     numeric_or_die "MAX_PLAYERS" "$max_players"
+    numeric_or_die "SERVER_REGION" "$server_region"
+    if (( server_region < 0 || server_region > 5 )); then
+        die "SERVER_REGION must be 0-5; got '${server_region}'. Values: 0=Europe, 1=North America, 2=Asia, 3=Australia, 4=South America, 5=Japan."
+    fi
     numeric_or_die "GAME_PORT" "$game_port"
     numeric_or_die "PINGER_PORT" "$pinger_port"
     numeric_or_die "QUERY_PORT" "$query_port"
@@ -179,6 +184,7 @@ main() {
     set_ini_value "$server_settings" "ServerSettings" "ServerPassword" "${SERVER_PASSWORD:-}" true
     set_ini_value "$server_settings" "ServerSettings" "AdminPassword" "${ADMIN_PASSWORD:-}" true
     set_ini_value "$server_settings" "ServerSettings" "MaxPlayers" "$max_players"
+    set_ini_value "$server_settings" "ServerSettings" "serverRegion" "$server_region"
     set_ini_value "$server_settings" "ServerSettings" "Port" "$game_port"
     set_ini_value "$server_settings" "ServerSettings" "PingerPort" "$pinger_port"
     set_ini_value "$server_settings" "ServerSettings" "QueryPort" "$query_port"

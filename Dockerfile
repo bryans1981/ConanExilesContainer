@@ -6,6 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     STEAMCMD=steamcmd \
     DOWNLOAD_BACKEND=depotdownloader \
     MOD_DOWNLOAD_BACKEND=depotdownloader \
+    SERVER_REGION=1 \
     FORCE_QUERY_PORT_ARG=true \
     MULTIHOME_IP= \
     MULTIHOME_HTTP_IP= \

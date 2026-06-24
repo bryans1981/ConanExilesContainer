@@ -66,6 +66,8 @@ Copy `.env.example` to `.env` and edit values before first boot. Passwords are n
 
 See `docs/CONFIG.md` for the full variable map.
 
+For the Conan server browser region, `SERVER_REGION=1` sets North America/America. The verified launcher mapping is `0` Europe, `1` North America, `2` Asia, `3` Australia, `4` South America, and `5` Japan.
+
 If direct LAN connect works but the server does not require the expected password, check the effective env and active Conan config without printing secrets:
 
 ```powershell

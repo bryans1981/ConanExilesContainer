@@ -147,6 +147,7 @@ try {
     $rconPort = Get-MapValue $envValues 'RCON_PORT' '25575'
     $rconEnabled = Test-Truthy (Get-MapValue $envValues 'RCON_ENABLED' 'true')
     $serverName = Get-MapValue $envValues 'SERVER_NAME' 'Conan Exiles Server'
+    $serverRegion = Get-MapValue $envValues 'SERVER_REGION' '1'
     $serverPassword = Get-MapValue $envValues 'SERVER_PASSWORD' ''
     $adminPassword = Get-MapValue $envValues 'ADMIN_PASSWORD' ''
     $composeArgs = @('--env-file', (Resolve-Path -LiteralPath $EnvFile).Path)
@@ -168,6 +169,11 @@ try {
         Add-Fail 'env.ADMIN_PASSWORD' 'Blank during admin password local live test.'
     } else {
         Add-Pass 'env.ADMIN_PASSWORD' '<set>'
+    }
+    if ($serverRegion -ne '1') {
+        Add-Fail 'env.SERVER_REGION' "Expected North America/America value 1 but found $serverRegion."
+    } else {
+        Add-Pass 'env.SERVER_REGION' '1 (North America/America)'
     }
 
     $lanAddresses = Get-NetIPConfiguration | Where-Object {
@@ -300,6 +306,13 @@ try {
         } else {
             Add-Pass 'config.ServerSettings.AdminPassword' '<set>'
         }
+
+        $configRegion = Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'serverRegion'
+        if ($configRegion -eq $serverRegion) {
+            Add-Pass 'config.ServerSettings.serverRegion' "$configRegion (North America/America)"
+        } else {
+            Add-Fail 'config.ServerSettings.serverRegion' "Expected $serverRegion but found $(if ($null -eq $configRegion) { '<missing>' } else { $configRegion })."
+        }
     }
 
     foreach ($endpoint in @(
@@ -374,6 +387,18 @@ try {
         }
     } else {
         Add-Warn 'log-startup-report-name' 'No Startup report name found in recent logs.'
+    }
+
+    $startupRegionReports = [regex]::Matches($logs, 'Startup report\..*?\sRegion=([0-9]+)\s', 'IgnoreCase')
+    if ($startupRegionReports.Count -gt 0) {
+        $startupRegion = $startupRegionReports[$startupRegionReports.Count - 1].Groups[1].Value
+        if ($startupRegion -eq $serverRegion) {
+            Add-Pass 'log-startup-report-region' "$startupRegion (North America/America)"
+        } else {
+            Add-Fail 'log-startup-report-region' "Expected $serverRegion but startup report showed $startupRegion."
+        }
+    } else {
+        Add-Warn 'log-startup-report-region' 'No Startup report region found in recent logs.'
     }
 
     $interesting = $logs -split "`n" | Where-Object {

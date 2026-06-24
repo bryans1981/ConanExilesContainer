@@ -28,9 +28,7 @@ Current MVP status: the local Docker Desktop default-flow MVP smoke test passed 
 
 Remaining validation beyond MVP smoke coverage:
 
-- Live game-client login from the Conan Exiles client; do not claim user connection success until the user confirms it.
-- Password-protected direct LAN connection from the Conan Exiles client; do not claim password protection success until the user confirms it.
-- Server-browser visibility from another LAN client; do not claim listing/public registration success until the user confirms it.
+- Client-facing region display should be retested after switching `SERVER_REGION` from `0` Europe to `1` North America/America.
 - Multi-mod ordering with more than one real Workshop mod.
 - Removing mod IDs and pruning old downloads.
 - Longer-running public server behavior.
@@ -77,7 +75,7 @@ Remaining validation beyond MVP smoke coverage:
 - Verified native launcher: `ConanSandboxServer.sh`.
 - Verified native executable: `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
 - Config generation creates persistent `LinuxServer` config files.
-- Config generation applies `SERVER_NAME`, `SERVER_PASSWORD`, `ADMIN_PASSWORD`, `MAX_PLAYERS`, ports, RCON toggle, and `RCON_PASSWORD`.
+- Config generation applies `SERVER_NAME`, `SERVER_PASSWORD`, `ADMIN_PASSWORD`, `MAX_PLAYERS`, `SERVER_REGION`, ports, RCON toggle, and `RCON_PASSWORD`.
 - Local live diagnostics verified that `SERVER_NAME` and `SERVER_PASSWORD` must be written to active `Engine.ini` section `[OnlineSubsystem]` for the running Linux server to consume them; the values are also mirrored to `ServerSettings.ini` for compatibility/visibility.
 - Password values are redacted from project startup/config logs.
 - Ignored local env files such as `.env.local-live` and `.env.test-live` are used for live testing and must not be committed.
@@ -95,6 +93,7 @@ Remaining validation beyond MVP smoke coverage:
 - Docker Engine `29.4.2` with builtin seccomp fails Linux SteamCMD login/app-info in both the project image and upstream `steamcmd/steamcmd:ubuntu-24`.
 - Diagnostic `seccomp=unconfined` makes Linux SteamCMD login/app-info pass in both the project image and upstream image.
 - The diagnostic compose override `docker-compose.steamcmd-unconfined.diagnostic.yml` renders successfully and is available only as a diagnostic/emergency workaround.
+- User confirmed from another LAN Conan Exiles client that the live Docker server can be seen, direct login works, server name is correct, and passwords work.
 
 ## Current SteamCMD Blocker
 
@@ -161,7 +160,9 @@ Verified on June 24, 2026 after the config fix:
 - The startup report now shows `Name=WickedServerContianer`.
 - `StartPlay` and SourceServerQueries on `27015` are still reached after restart.
 
-Do not claim password protection works until the user confirms a direct LAN connection prompts for and accepts the configured local test password.
+The user later confirmed direct LAN login, correct server name, and password behavior from the Conan Exiles client.
+
+User confirmed after that fix that the client could log in, see the correct server name, and use the configured passwords. Region display then showed EU because `serverRegion=0`; the Windows Dedicated Server Launcher mapping verifies `1` is North America. `SERVER_REGION=1` is now the project default for the local live server.
 
 ## Environment Variables
 
@@ -174,6 +175,7 @@ Do not claim password protection works until the user confirms a direct LAN conn
 | `SERVER_PASSWORD` | empty | Server join password | Active: `Engine.ini` / `OnlineSubsystem.ServerPassword`; mirrored to `ServerSettings.ini` / `ServerSettings.ServerPassword` |
 | `ADMIN_PASSWORD` | empty | Admin password | `ServerSettings.ini` / `ServerSettings.AdminPassword` |
 | `MAX_PLAYERS` | `40` | Player limit | `ServerSettings.ini` / `ServerSettings.MaxPlayers`; `Game.ini` / `/Script/Engine.GameSession.MaxPlayers` |
+| `SERVER_REGION` | `1` | Browser/list region | `ServerSettings.ini` / `ServerSettings.serverRegion`; `1` is North America/America |
 | `GAME_PORT` | `7777` | Game UDP port | `ServerSettings.ini` / `ServerSettings.Port`; `Engine.ini` / `URL.Port` |
 | `PINGER_PORT` | `7778` | Pinger UDP port | `ServerSettings.ini` / `ServerSettings.PingerPort` |
 | `QUERY_PORT` | `27015` | Steam query UDP port | `ServerSettings.ini` / `ServerSettings.QueryPort`; `Engine.ini` / `OnlineSubsystemSteam.GameServerQueryPort` |

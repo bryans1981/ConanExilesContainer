@@ -2,6 +2,7 @@ param(
     [string]$EnvFile = '.env.local-live',
     [string]$ServiceName = 'conan',
     [string]$ExpectedServerName = 'WickedServerContianer',
+    [string]$ExpectedServerRegion = '1',
     [switch]$AllowBlankPasswords
 )
 
@@ -131,6 +132,7 @@ try {
 
     $envValues = Read-EnvFile -Path $EnvFile
     $expectedName = Get-MapValue -Map $envValues -Name 'SERVER_NAME' -Default $ExpectedServerName
+    $expectedRegion = Get-MapValue -Map $envValues -Name 'SERVER_REGION' -Default $ExpectedServerRegion
     $gamePort = Get-MapValue -Map $envValues -Name 'GAME_PORT' -Default '7777'
     $pingerPort = Get-MapValue -Map $envValues -Name 'PINGER_PORT' -Default '7778'
     $queryPort = Get-MapValue -Map $envValues -Name 'QUERY_PORT' -Default '27015'
@@ -196,6 +198,7 @@ try {
     Test-ExpectedValue 'ServerSettings.ini [ServerSettings] ServerName' (Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'ServerName') $expectedName
     Test-SecretPresent 'ServerSettings.ini [ServerSettings] ServerPassword' (Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'ServerPassword')
     Test-SecretPresent 'ServerSettings.ini [ServerSettings] AdminPassword' (Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'AdminPassword')
+    Test-ExpectedValue 'ServerSettings.ini [ServerSettings] serverRegion' (Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'serverRegion') $expectedRegion
     Test-ExpectedValue 'ServerSettings.ini [ServerSettings] Port' (Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'Port') $gamePort
     Test-ExpectedValue 'ServerSettings.ini [ServerSettings] PingerPort' (Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'PingerPort') $pingerPort
     Test-ExpectedValue 'ServerSettings.ini [ServerSettings] QueryPort' (Get-IniValue -Ini $serverSettings -Section 'ServerSettings' -Key 'QueryPort') $queryPort
@@ -218,7 +221,7 @@ try {
                 return
             }
             $seen[$_.FullName] = $true
-            $matches = Select-String -LiteralPath $_.FullName -Pattern '^(ServerName|ServerPassword|AdminPassword|GameServerQueryPort|Port|PingerPort|QueryPort|MaxPlayers|RconEnabled|RconPort|RconPassword)\s*=' -ErrorAction SilentlyContinue
+            $matches = Select-String -LiteralPath $_.FullName -Pattern '^(ServerName|ServerPassword|AdminPassword|serverRegion|GameServerQueryPort|Port|PingerPort|QueryPort|MaxPlayers|RconEnabled|RconPort|RconPassword)\s*=' -ErrorAction SilentlyContinue
             if ($matches) {
                 Add-Info 'inventory.file' $_.FullName
                 foreach ($match in $matches) {

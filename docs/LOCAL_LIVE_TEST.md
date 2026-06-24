@@ -24,6 +24,7 @@ GAME_PORT=7777
 PINGER_PORT=7778
 QUERY_PORT=27015
 FORCE_QUERY_PORT_ARG=true
+SERVER_REGION=1
 MULTIHOME_IP=
 MULTIHOME_HTTP_IP=
 RCON_ENABLED=true
@@ -116,6 +117,15 @@ It is linked into:
 ```
 
 The managed server name and server password are written to `Engine.ini` section `[OnlineSubsystem]` on container startup. They are also mirrored to `ServerSettings.ini` section `[ServerSettings]`.
+
+`SERVER_REGION=1` sets Conan's `serverRegion` to North America/America. The verified mapping from the Windows Dedicated Server Launcher is:
+
+- `0`: Europe
+- `1`: North America
+- `2`: Asia
+- `3`: Australia
+- `4`: South America
+- `5`: Japan
 
 ## 5. View Logs
 
@@ -225,6 +235,7 @@ After trying the game client, report:
 - Whether direct connect requires a password.
 - Whether query/favorite entry with `<windows-docker-host-lan-ip>:27015` works, if supported.
 - Whether the configured local test password is accepted or rejected.
+- Whether the server region shows America/North America instead of EU.
 - Whether character creation/login reaches the server.
 - Any exact client error text.
 - Whether connection attempts appear in Docker logs.

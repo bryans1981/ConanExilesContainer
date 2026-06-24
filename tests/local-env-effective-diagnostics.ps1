@@ -2,6 +2,7 @@ param(
     [string]$EnvFile = '.env.local-live',
     [string]$ServiceName = 'conan',
     [string]$ExpectedServerName = 'WickedServerContianer',
+    [string]$ExpectedServerRegion = '1',
     [switch]$AllowBlankPasswords
 )
 
@@ -97,6 +98,7 @@ try {
         'SERVER_NAME',
         'SERVER_PASSWORD',
         'ADMIN_PASSWORD',
+        'SERVER_REGION',
         'GAME_PORT',
         'PINGER_PORT',
         'QUERY_PORT',
@@ -201,7 +203,7 @@ try {
 
         foreach ($name in $envNames) {
             $value = Get-MapValue -Map $containerEnv -Name $name
-            if ($name -in @('SERVER_NAME', 'SERVER_PASSWORD', 'ADMIN_PASSWORD', 'GAME_PORT', 'PINGER_PORT', 'QUERY_PORT')) {
+            if ($name -in @('SERVER_NAME', 'SERVER_PASSWORD', 'ADMIN_PASSWORD', 'SERVER_REGION', 'GAME_PORT', 'PINGER_PORT', 'QUERY_PORT')) {
                 Test-RequiredValue -Scope 'container-env' -Name $name -Value $value
             } else {
                 Add-Info "container-env.$name" (Format-EnvValue -Name $name -Value $value)
@@ -215,6 +217,13 @@ try {
             Add-Fail 'container-env.SERVER_NAME' "Expected $ExpectedServerName but found $containerServerName."
         } else {
             Add-Pass 'container-env.SERVER_NAME.expected' $ExpectedServerName
+        }
+
+        $containerServerRegion = Get-MapValue -Map $containerEnv -Name 'SERVER_REGION'
+        if ($containerServerRegion -ne $ExpectedServerRegion) {
+            Add-Fail 'container-env.SERVER_REGION.expected' "Expected $ExpectedServerRegion but found $(if ($null -eq $containerServerRegion) { '<missing>' } else { $containerServerRegion })."
+        } else {
+            Add-Pass 'container-env.SERVER_REGION.expected' $ExpectedServerRegion
         }
     }
 

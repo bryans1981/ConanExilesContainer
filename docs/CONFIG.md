@@ -22,6 +22,7 @@ Passwords are never printed in logs. Logs only report whether each password is s
 | `SERVER_PASSWORD` | empty | Active: `Engine.ini` / `OnlineSubsystem.ServerPassword`; also mirrored to `ServerSettings.ini` / `ServerSettings.ServerPassword` |
 | `ADMIN_PASSWORD` | empty | `ServerSettings.ini` / `ServerSettings.AdminPassword` |
 | `MAX_PLAYERS` | `40` | `ServerSettings.ini` / `ServerSettings.MaxPlayers`; `Game.ini` / `/Script/Engine.GameSession.MaxPlayers` |
+| `SERVER_REGION` | `1` | `ServerSettings.ini` / `ServerSettings.serverRegion`; values: `0` Europe, `1` North America/America, `2` Asia, `3` Australia, `4` South America, `5` Japan |
 | `GAME_PORT` | `7777` | `ServerSettings.ini` / `ServerSettings.Port`; `Engine.ini` / `URL.Port` |
 | `PINGER_PORT` | `7778` | `ServerSettings.ini` / `ServerSettings.PingerPort` |
 | `QUERY_PORT` | `27015` | `ServerSettings.ini` / `ServerSettings.QueryPort`; `Engine.ini` / `OnlineSubsystemSteam.GameServerQueryPort` |
