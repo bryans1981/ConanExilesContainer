@@ -125,7 +125,14 @@ Publish status on June 24, 2026:
 - Pull verification result: pass; Docker reported `Status: Image is up to date for bryans1981/conanexilescontainer:latest`.
 - Docker Hub repository overview update: pass; Docker Hub API readback showed `full_description` exactly matches local `README.md` and the short description is set.
 
-Next step: set up Unraid using the Docker Hub image, mapped ports/volumes, and UI environment variable overrides.
+Root-volume publish status:
+
+- `scripts/dockerhub-build-push.ps1 -Push` was run after changing the image to `VOLUME ["/serverdata"]`.
+- Docker Hub push completed for `latest` and the short Git SHA tag current at publish time.
+- `docker pull bryans1981/conanexilescontainer:latest` passed after the root-volume publish.
+- `docker image inspect bryans1981/conanexilescontainer:latest --format '{{json .Config.Volumes}}'` returned `{"/serverdata":{}}`.
+
+Next step: set up Unraid using the Docker Hub image, mapped ports, one root `/serverdata` volume, and UI environment variable overrides.
 
 ## Important Decisions
 
@@ -144,5 +151,5 @@ Next step: set up Unraid using the Docker Hub image, mapped ports/volumes, and U
 
 1. Set up Unraid using `bryans1981/conanexilescontainer:latest`.
 2. Map ports `7777/udp`, `7778/udp`, `27015/udp`, and `25575/tcp` if RCON is enabled.
-3. Map persistent server, Steam/cache, config, logs, and backup paths.
+3. Map one persistent root data path to `/serverdata`; the container creates `serverfiles`, `steam`, `config`, `logs`, and `backups` when missing.
 4. Set environment variables in the Unraid UI without committing secrets.
