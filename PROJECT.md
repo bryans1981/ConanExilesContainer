@@ -28,6 +28,7 @@ Current MVP status: the local Docker Desktop default-flow MVP smoke test passed 
 
 Remaining validation beyond MVP smoke coverage:
 
+- Live game-client login from the Conan Exiles client; do not claim user connection success until the user confirms it.
 - Multi-mod ordering with more than one real Workshop mod.
 - Removing mod IDs and pruning old downloads.
 - Longer-running public server behavior.
@@ -76,6 +77,7 @@ Remaining validation beyond MVP smoke coverage:
 - Config generation creates persistent `LinuxServer` config files.
 - Config generation applies `SERVER_NAME`, `SERVER_PASSWORD`, `ADMIN_PASSWORD`, `MAX_PLAYERS`, ports, RCON toggle, and `RCON_PASSWORD`.
 - Password values are redacted from project startup/config logs.
+- Ignored local env files such as `.env.local-live` and `.env.test-live` are used for live testing and must not be committed.
 - Empty `WORKSHOP_MOD_IDS` creates an empty active mod list.
 - `MOD_DOWNLOAD_BACKEND=depotdownloader` downloads Workshop item `3720546346` under Docker default security.
 - Verified Workshop `.pak`: `steamapps/workshop/content/440900/3720546346/HEUnlimitedWeight.pak`.
@@ -204,6 +206,7 @@ Verified public test item: `3720546346` (`[Enhanced] Unlimited Weight`).
 - Confirm backup creation.
 - Confirm logs do not expose passwords.
 - Confirm project-control docs are current.
+- For live client testing, follow `docs/LOCAL_LIVE_TEST.md` and leave the server running for the user when it reaches readiness.
 - Run `tests/steamcmd-connectivity.ps1` or `tests/steamcmd-connectivity.sh` when SteamCMD anonymous login or AppID download fails.
 
 ## Phase 2 WebGUI Notes

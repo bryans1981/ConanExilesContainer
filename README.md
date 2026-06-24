@@ -107,6 +107,17 @@ Watch logs for `StartPlay` during launch. The local default-flow smoke test has 
 
 See `docs/LOCAL_DOCKER_DESKTOP.md`.
 
+## Local Live Client Testing
+
+For a real local game-client login test, use an ignored local env file and the live-test workflow:
+
+```powershell
+docker compose --env-file .env.local-live up -d --build
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-live-status.ps1 -EnvFile .env.local-live
+```
+
+See `docs/LOCAL_LIVE_TEST.md` for the server-browser name, direct-connect options, log checks, stop/restart commands, and what client result to report back. Do not commit `.env.local-live` or real local test passwords.
+
 ## Troubleshooting
 
 If SteamCMD anonymous login fails with `FAILED (No Connection)`, run the repeatable diagnostics:

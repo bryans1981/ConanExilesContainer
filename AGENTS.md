@@ -10,6 +10,7 @@ Rules for Codex and future agents:
 - Do not fake incomplete features. Planned features must be marked as planned/not active.
 - Do not overwrite saves or custom config. Generate defaults only when files are missing, and preserve existing files before linking or changing runtime locations.
 - Keep passwords and secrets out of logs.
+- Use ignored local env files for live tests. Do not commit real local test passwords or generated live server data.
 - Keep `AGENTS.md`, `PROJECT.md`, `PROJECT_MAP.md`, and `SESSION_HANDOFF.md` updated after meaningful changes.
 - Run local Docker Desktop testing before claiming MVP success.
 - Do not attempt LAN, Rocky Linux, or Unraid connectivity tests from the local Codex host. This environment has public internet access only and no LAN access by design.

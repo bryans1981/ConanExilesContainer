@@ -1,6 +1,9 @@
 # Local runtime data
 data/
 .env
+.env.local
+.env.local-live
+.env.test-live
 
 # Docker and generated logs
 *.log

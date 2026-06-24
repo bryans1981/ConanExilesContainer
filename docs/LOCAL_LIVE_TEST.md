@@ -1,0 +1,168 @@
+# Local Live Client Test
+
+Use this workflow when the goal is to run the Docker Desktop server locally and connect from the Conan Exiles game client on the same Windows host or another machine on the same LAN.
+
+Do not use this workflow for Rocky Linux, Unraid, or WebGUI work.
+
+## 1. Create Local Env File
+
+Create an ignored local env file from the repository root:
+
+```powershell
+Copy-Item .env.example .env.local-live
+```
+
+Edit `.env.local-live` for the live test:
+
+```env
+SERVER_NAME=WickedServerContianer
+SERVER_PASSWORD=<local-test-password>
+ADMIN_PASSWORD=<local-test-password>
+DOWNLOAD_BACKEND=depotdownloader
+MOD_DOWNLOAD_BACKEND=depotdownloader
+GAME_PORT=7777
+PINGER_PORT=7778
+QUERY_PORT=27015
+RCON_ENABLED=true
+RCON_PORT=25575
+RCON_PASSWORD=<local-test-password>
+UPDATE_SERVER_ON_START=true
+UPDATE_MODS_ON_START=true
+WORKSHOP_MOD_IDS=
+BACKUP_ON_START=true
+BACKUP_ON_STOP=false
+```
+
+The local env file is intentionally ignored by git and Docker build context. Do not commit real local test passwords.
+
+## 2. Validate Compose
+
+Use quiet config output so password values are not printed:
+
+```powershell
+docker compose config --quiet
+docker compose --env-file .env.local-live config --quiet
+```
+
+## 3. Start The Server
+
+Start or update the local live server:
+
+```powershell
+docker compose --env-file .env.local-live up -d --build
+```
+
+This uses the normal secure Docker profile. Do not add the SteamCMD `seccomp=unconfined` diagnostic override for this DepotDownloader default flow.
+
+## 4. Check Status
+
+Show compose service status:
+
+```powershell
+docker compose --env-file .env.local-live ps
+```
+
+Run the local status helper:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-live-status.ps1 -EnvFile .env.local-live
+```
+
+The helper checks:
+
+- Compose container status.
+- Published ports.
+- Recent logs for `StartPlay`.
+- Recent fatal startup patterns.
+- Password value leaks in retained logs.
+- Local `data/` disk usage.
+
+## 5. View Logs
+
+Follow logs while the client tries to connect:
+
+```powershell
+docker compose --env-file .env.local-live logs -f --tail 200 conan
+```
+
+Read recent logs without following:
+
+```powershell
+docker compose --env-file .env.local-live logs --tail 400 conan
+```
+
+The ready marker to look for is `StartPlay`.
+
+## 6. Confirm Ports
+
+The status helper checks port publishing automatically. You can also inspect compose output:
+
+```powershell
+docker compose --env-file .env.local-live ps
+```
+
+Expected published ports:
+
+- `7777/udp`: game traffic
+- `7778/udp`: pinger
+- `27015/udp`: Steam query
+- `25575/tcp`: RCON, when enabled
+
+## 7. Connect From Conan Exiles Client
+
+Try the in-game server browser first:
+
+```text
+WickedServerContianer
+```
+
+If direct connect is available, try:
+
+```text
+127.0.0.1:7777
+localhost:7777
+<host-lan-ip>:7777
+```
+
+Use the local test password from `.env.local-live`.
+
+Query port:
+
+```text
+27015
+```
+
+For another machine on the LAN, use the Windows host LAN IP instead of `127.0.0.1` or `localhost`.
+
+## 8. Stop Or Restart
+
+Stop without deleting data:
+
+```powershell
+docker compose --env-file .env.local-live stop
+```
+
+Restart without wiping data:
+
+```powershell
+docker compose --env-file .env.local-live up -d
+```
+
+Remove the running container while keeping mapped `./data` folders:
+
+```powershell
+docker compose --env-file .env.local-live down
+```
+
+Do not delete `./data` unless you intentionally want to remove local server files, saves, config, logs, Steam cache, mods, and backups.
+
+## 9. What To Report Back
+
+After trying the game client, report:
+
+- Whether `WickedServerContianer` appears in the server browser.
+- Whether direct connect works.
+- Whether the password is accepted.
+- Whether character creation/login reaches the server.
+- Any exact client error text.
+- Whether connection attempts appear in Docker logs.

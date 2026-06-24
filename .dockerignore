@@ -2,6 +2,9 @@
 data
 test-results
 .env
+.env.local
+.env.local-live
+.env.test-live
 *.log
 *.tar.gz
 tmp

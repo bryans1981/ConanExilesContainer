@@ -16,6 +16,8 @@ docker compose logs -f
 docker compose down
 ```
 
+For live game-client testing on the local Windows host, use `docs/LOCAL_LIVE_TEST.md` instead of moving to Rocky Linux or starting WebGUI work.
+
 ## Required Checklist
 
 - Build image locally.
@@ -67,6 +69,7 @@ docker compose down
 - Single-mod Workshop download and project modlist generation were verified under Docker default security using DepotDownloader item `3720546346`.
 - Single-mod Workshop download and project modlist generation were also verified under diagnostic `seccomp=unconfined` using SteamCMD item `3720546346`.
 - Clean disposable compose e2e with DepotDownloader defaults passed: server download, config generation, test password application without retained-log leaks, Workshop mod download, modlist generation, `StartPlay`, graceful shutdown, restart persistence, and backup creation.
+- Local live-client workflow now uses ignored `.env.local-live` and `tests/local-live-status.ps1`.
 - Remaining local checks: multi-mod ordering, mod removal/pruning, and longer-running server behavior.
 
 External metadata checked June 23, 2026:

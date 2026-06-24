@@ -39,6 +39,7 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `tests/windows-steamcmd-comparison.ps1`: Windows host SteamCMD comparison diagnostic. Detects `WINDOWS_STEAMCMD_EXE` or common launcher locations and runs anonymous login/app-info without secrets.
 - `tests/steamcmd-security-diagnostics.ps1`: Windows/PowerShell Docker security diagnostics for Docker version/info/context, default seccomp, diagnostic `seccomp=unconfined`, optional custom seccomp profile, project image, upstream image, and optional host networking.
 - `tests/steamcmd-security-diagnostics.sh`: Bash Docker security diagnostics for compatible Linux/macOS/Git Bash shells.
+- `tests/local-live-status.ps1`: Windows/PowerShell local live-server status helper for compose service state, published ports, recent `StartPlay`, password leak scan, and local data disk usage.
 
 ## Data And Volume Layout
 
@@ -82,6 +83,8 @@ Local Docker Desktop paths:
 - Single-mod Workshop download was verified under diagnostic `seccomp=unconfined` using public item `3720546346`; verified `.pak` file was `HEUnlimitedWeight.pak`.
 - DepotDownloader Workshop download was verified under Docker default security using public item `3720546346`; verified `.pak` file was `HEUnlimitedWeight.pak`.
 - Clean disposable compose e2e using the DepotDownloader defaults downloaded AppID `443030`, generated config, downloaded Workshop item `3720546346`, generated `ConanSandbox/Mods/modlist.txt`, reached `StartPlay`, stopped gracefully, restarted, preserved config/modlist, created backups, and removed large disposable server/cache folders after preserving proof logs.
+- Local live-client testing uses ignored `.env.local-live` or `.env.test-live` files. Do not commit local live passwords or generated `data/`.
+- Live client connection success must be confirmed by the user from the Conan Exiles game client before it is claimed.
 - Auto update loops are not active in MVP.
 
 Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Linux, and Unraid still need later verification.
@@ -92,6 +95,7 @@ Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Lin
 - `docs/MODS.md`: Workshop mod behavior.
 - `docs/BACKUPS.md`: backup and restore basics.
 - `docs/LOCAL_DOCKER_DESKTOP.md`: local test procedure and current status.
+- `docs/LOCAL_LIVE_TEST.md`: local Docker Desktop live-client test workflow and connection checklist.
 - `docs/ROCKY_LINUX.md`: Rocky Linux deployment/test notes.
 - `docs/WEBGUI_PHASE_2.md`: future WebGUI design.
 - `docs/TROUBLESHOOTING_STEAMCMD.md`: SteamCMD/Docker Desktop connectivity blocker explanation and diagnostic workflow.
