@@ -9,7 +9,7 @@ Do not use this workflow for Rocky Linux, Unraid, or WebGUI work.
 Create an ignored local env file from the repository root:
 
 ```powershell
-Copy-Item .env.example .env.local-live
+Copy-Item .env .env.local-live
 ```
 
 Edit `.env.local-live` for the live test:
@@ -24,7 +24,7 @@ GAME_PORT=7777
 PINGER_PORT=7778
 QUERY_PORT=27015
 FORCE_QUERY_PORT_ARG=true
-SERVER_REGION=1
+SERVER_REGION=America
 MULTIHOME_IP=
 MULTIHOME_HTTP_IP=
 RCON_ENABLED=true
@@ -118,7 +118,7 @@ It is linked into:
 
 The managed server name and server password are written to `Engine.ini` section `[OnlineSubsystem]` on container startup. They are also mirrored to `ServerSettings.ini` section `[ServerSettings]`.
 
-`SERVER_REGION=1` sets Conan's `serverRegion` to North America/America. The verified mapping from the Windows Dedicated Server Launcher is:
+`SERVER_REGION=America` sets Conan's `serverRegion` to `1`, which the Conan client displays as America/North America. Numeric values are also accepted. The verified mapping from the Windows Dedicated Server Launcher is:
 
 - `0`: Europe
 - `1`: North America
@@ -239,3 +239,5 @@ After trying the game client, report:
 - Whether character creation/login reaches the server.
 - Any exact client error text.
 - Whether connection attempts appear in Docker logs.
+
+Confirmed on June 24, 2026: the LAN client can see the server, log in, use the configured server/admin passwords, and shows the corrected America region.

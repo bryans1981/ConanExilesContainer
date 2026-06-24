@@ -135,9 +135,40 @@ EOF
     fi
 }
 
+server_region_value() {
+    local value="${1:-America}"
+    local normalized
+
+    normalized="$(to_lower "$value" | tr -d '[:space:]_-')"
+
+    case "$normalized" in
+        0|europe|eu)
+            printf '0'
+            ;;
+        1|america|northamerica|na|us|usa|unitedstates)
+            printf '1'
+            ;;
+        2|asia)
+            printf '2'
+            ;;
+        3|australia|oceania)
+            printf '3'
+            ;;
+        4|southamerica|sa)
+            printf '4'
+            ;;
+        5|japan|jp)
+            printf '5'
+            ;;
+        *)
+            die "Invalid SERVER_REGION: '${value}'. Use America/NorthAmerica or one of 0=Europe, 1=North America, 2=Asia, 3=Australia, 4=South America, 5=Japan."
+            ;;
+    esac
+}
+
 main() {
     local max_players="${MAX_PLAYERS:-40}"
-    local server_region="${SERVER_REGION:-1}"
+    local server_region
     local game_port="${GAME_PORT:-7777}"
     local pinger_port="${PINGER_PORT:-7778}"
     local query_port="${QUERY_PORT:-27015}"
@@ -153,10 +184,7 @@ main() {
     local game_ini
 
     numeric_or_die "MAX_PLAYERS" "$max_players"
-    numeric_or_die "SERVER_REGION" "$server_region"
-    if (( server_region < 0 || server_region > 5 )); then
-        die "SERVER_REGION must be 0-5; got '${server_region}'. Values: 0=Europe, 1=North America, 2=Asia, 3=Australia, 4=South America, 5=Japan."
-    fi
+    server_region="$(server_region_value "${SERVER_REGION:-America}")"
     numeric_or_die "GAME_PORT" "$game_port"
     numeric_or_die "PINGER_PORT" "$pinger_port"
     numeric_or_die "QUERY_PORT" "$query_port"

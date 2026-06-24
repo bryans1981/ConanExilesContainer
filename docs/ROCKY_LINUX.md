@@ -7,11 +7,12 @@ Expected flow:
 ```bash
 git clone https://github.com/<YOUR_GITHUB_USER>/ConanExilesContainer.git
 cd ConanExilesContainer
-cp .env.example .env
 docker compose build
 docker compose up -d
 docker compose logs -f
 ```
+
+The repository includes a safe committed `.env`. Edit it or provide host/Compose overrides before first start. Do not commit real server passwords or machine-specific paths.
 
 Host notes:
 

@@ -1,87 +1,150 @@
 # ConanExilesContainer
 
-Docker container project for running a Conan Exiles Enhanced dedicated server from Steam dedicated server AppID `443030`.
+Docker container project for a Conan Exiles dedicated server using native Linux server files from Steam AppID `443030`.
 
-Current status: local Docker Desktop MVP flow is verified with the default DepotDownloader backend. A clean disposable compose run downloaded AppID `443030`, generated config, downloaded Workshop item `3720546346`, wrote `ConanSandbox/Mods/modlist.txt`, started through the native Linux launcher to `StartPlay`, shut down gracefully, restarted without wiping config/modlist, created backups, and did not print test password values in retained logs. Wine is not included in the MVP.
+## Overview
 
-SteamCMD status: Docker Desktop `4.72.0` / Engine `29.4.2` blocks Linux SteamCMD under the default builtin seccomp profile. Windows host SteamCMD works, and Linux SteamCMD works when run with diagnostic `seccomp=unconfined`, so this is a Docker security-profile compatibility issue, not a general Steam or host internet failure. The normal compose flow avoids that blocker by using DepotDownloader for server and Workshop downloads by default.
+This repository builds a local image that downloads, configures, backs up, optionally mods, and starts a Conan Exiles server. No public Docker Hub or GHCR image is published yet, so the compose examples use `build: .`.
 
-## Requirements
+DepotDownloader is the default download backend for both server files and Workshop mods. SteamCMD remains available as an explicit troubleshooting or host-specific option.
 
-- Docker Desktop for local development, or Docker Engine on Linux.
-- UDP ports `7777`, `7778`, and `27015` available.
-- TCP port `25575` available if RCON is enabled.
-- Enough disk space for the server files, Workshop mods, saves, logs, and backups.
+## Current Status
+
+- Local Docker Desktop MVP flow is verified with the default DepotDownloader backend.
+- Real AppID `443030` Linux server files were downloaded and launched through the native Linux launcher.
+- Local LAN client testing is confirmed for login, server name, server password, admin password, and America/North America region display.
+- Docker Engine `29.4.2` builtin seccomp blocks Linux SteamCMD on this host; DepotDownloader avoids that blocker.
+- Rocky Linux, Unraid, long-running public behavior, and multi-mod pruning still need later validation.
+- Wine and the WebGUI are not part of the MVP.
+
+## Features
+
+- Builds an Ubuntu-based Conan Exiles server image.
+- Downloads/updates server files with DepotDownloader, SteamCMD, or explicit `auto` fallback.
+- Generates and updates persistent Conan config.
+- Supports ordered Workshop mod downloads and `ConanSandbox/Mods/modlist.txt`.
+- Creates timestamped backups for config, saves, mod state, and manifest data.
+- Preserves server files, Steam cache, config, logs, backups, and saves through bind-mounted volumes.
+- Includes focused diagnostics for local live testing, Docker Desktop networking, SteamCMD, DepotDownloader, and Windows Firewall.
 
 ## Quick Start
 
+The committed `.env` contains safe defaults only. Edit it or override values through Docker Compose, Docker, Unraid, or your host environment. Put real local passwords and live test values in ignored files such as `.env.local-live`, not in committed files.
+
 ```powershell
-Copy-Item .env.example .env
 docker compose build
 docker compose up -d
-docker compose logs -f
+docker compose logs -f conan
 ```
 
-The first boot downloads or updates the dedicated server, creates missing config files, applies environment settings, updates configured Workshop mods, creates backups when enabled, and starts the server.
+First startup downloads or updates the server, applies config, updates listed mods, creates backups when enabled, and launches the server.
 
-DepotDownloader is the default downloader for both server files and Workshop mods:
+## Docker Compose
 
-```env
-DOWNLOAD_BACKEND=depotdownloader
-MOD_DOWNLOAD_BACKEND=depotdownloader
+`docker-compose.yml` is the recommended starting point:
+
+```yaml
+services:
+  conan:
+    build:
+      context: .
+    image: conan-exiles-container:local
+    container_name: conan-exiles-container
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "7777:7777/udp"
+      - "7778:7778/udp"
+      - "27015:27015/udp"
+      - "25575:25575/tcp"
+    volumes:
+      - ./data/serverfiles:/serverdata/serverfiles
+      - ./data/steam:/serverdata/steam
+      - ./data/config:/serverdata/config
+      - ./data/logs:/serverdata/logs
+      - ./data/backups:/serverdata/backups
 ```
 
-SteamCMD remains available for hosts where it works:
+The checked-in compose file already reads `.env` through Compose variable substitution, so `docker compose up -d` is enough for the normal local flow.
 
-```env
-DOWNLOAD_BACKEND=steamcmd
-MOD_DOWNLOAD_BACKEND=steamcmd
+## Docker Run
+
+Build the local image first:
+
+```powershell
+docker build -t conan-exiles-container:local .
 ```
 
-For diagnostics or an explicit fallback test, set either backend to `auto`. `auto` tries DepotDownloader first, then logs any failure before trying SteamCMD. It is not silent fallback.
+Then run it with the safe `.env` file or your own ignored env file:
+
+```powershell
+docker run -d --name conan-exiles-container --restart unless-stopped `
+  --env-file .env `
+  -p 7777:7777/udp `
+  -p 7778:7778/udp `
+  -p 27015:27015/udp `
+  -p 25575:25575/tcp `
+  -v ${PWD}/data/serverfiles:/serverdata/serverfiles `
+  -v ${PWD}/data/steam:/serverdata/steam `
+  -v ${PWD}/data/config:/serverdata/config `
+  -v ${PWD}/data/logs:/serverdata/logs `
+  -v ${PWD}/data/backups:/serverdata/backups `
+  conan-exiles-container:local
+```
 
 ## Ports
 
-- `7777/udp`: game traffic
-- `7778/udp`: pinger
-- `27015/udp`: Steam query
-- `25575/tcp`: RCON
-- `8080/tcp`: reserved for future Phase 2 WebGUI; not used by the MVP
+| Port | Protocol | Purpose |
+| --- | --- | --- |
+| `7777` | UDP | Game traffic |
+| `7778` | UDP | Pinger |
+| `27015` | UDP | Steam/server query |
+| `25575` | TCP | RCON when enabled |
+| `8080` | TCP | Reserved for future WebGUI, not active |
 
 ## Volumes
 
-The compose file maps:
-
-- `./data/serverfiles:/serverdata/serverfiles`
-- `./data/steam:/serverdata/steam`
-- `./data/config:/serverdata/config`
-- `./data/logs:/serverdata/logs`
-- `./data/backups:/serverdata/backups`
+| Host path | Container path | Contents |
+| --- | --- | --- |
+| `./data/serverfiles` | `/serverdata/serverfiles` | Server install, saves, generated game data |
+| `./data/steam` | `/serverdata/steam` | SteamCMD cache and Workshop downloads |
+| `./data/config` | `/serverdata/config` | Persistent Conan config |
+| `./data/logs` | `/serverdata/logs` | Container and server logs |
+| `./data/backups` | `/serverdata/backups` | Backup archives |
 
 Do not delete `./data` unless you intend to remove local server files, saves, config, logs, Steam cache, mods, and backups.
 
-## Configuration
+## Environment Variables
 
-Copy `.env.example` to `.env` and edit values before first boot. Passwords are never printed in logs; logs only report whether password variables are set or empty.
+| Variable | Default | Notes |
+| --- | --- | --- |
+| `TZ` | `America/New_York` | Container timezone |
+| `PUID` / `PGID` | `1000` / `1000` | Runtime user and group IDs |
+| `SERVER_NAME` | `Conan Exiles Server` | Display name |
+| `SERVER_PASSWORD` | empty | Join password; blank means no password |
+| `ADMIN_PASSWORD` | empty | Admin password |
+| `SERVER_REGION` | `America` | Accepts `America`, `NorthAmerica`, or numeric `0..5`; writes `serverRegion=1` for America |
+| `MAX_PLAYERS` | `40` | Player limit |
+| `GAME_PORT` | `7777` | Game UDP port |
+| `PINGER_PORT` | `7778` | Pinger UDP port |
+| `QUERY_PORT` | `27015` | Steam query UDP port |
+| `RCON_ENABLED` | `false` | Enable RCON listener/settings |
+| `RCON_PORT` | `25575` | RCON TCP port |
+| `RCON_PASSWORD` | empty | RCON password |
+| `DOWNLOAD_BACKEND` | `depotdownloader` | `depotdownloader`, `steamcmd`, or `auto` |
+| `MOD_DOWNLOAD_BACKEND` | `depotdownloader` | `depotdownloader`, `steamcmd`, or `auto` |
+| `UPDATE_SERVER_ON_START` | `true` | Run server update before launch |
+| `VALIDATE_SERVER_FILES` | `false` | Validate files when supported |
+| `UPDATE_MODS_ON_START` | `true` | Update listed Workshop mods before launch |
+| `WORKSHOP_MOD_IDS` | empty | Comma-separated ordered Workshop item IDs |
+| `PRUNE_REMOVED_MODS` | `true` | Remove old downloaded mods no longer listed |
+| `BACKUP_ON_START` | `true` | Backup before startup update/mod operations |
+| `BACKUP_ON_STOP` | `false` | Backup during graceful shutdown |
+| `BACKUP_RETENTION_DAYS` | `14` | Delete older backups; `0` disables cleanup |
+| `EXTRA_ARGS` | empty | Extra launch arguments; do not put secrets here |
 
-See `docs/CONFIG.md` for the full variable map.
-
-For the Conan server browser region, `SERVER_REGION=1` sets North America/America. The verified launcher mapping is `0` Europe, `1` North America, `2` Asia, `3` Australia, `4` South America, and `5` Japan.
-
-If direct LAN connect works but the server does not require the expected password, check the effective env and active Conan config without printing secrets:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live
-```
-
-## Updates
-
-`UPDATE_SERVER_ON_START=true` runs the selected download backend on container startup. If `UPDATE_SERVER_ON_START=false` and existing server files are detected, update is skipped. If server files do not exist, the container downloads them even when the update flag is false.
-
-`VALIDATE_SERVER_FILES=true` adds backend validation when supported.
-
-`AUTO_GAME_UPDATE` and `AUTO_MOD_UPDATE` are planned variables only in the MVP. The container logs that they are not active if enabled.
+See [docs/CONFIG.md](docs/CONFIG.md) for the full variable map and config targets.
 
 ## Mods
 
@@ -91,99 +154,52 @@ Set `WORKSHOP_MOD_IDS` to a comma-separated ordered list:
 WORKSHOP_MOD_IDS=123456789,987654321
 ```
 
-The container downloads each mod, finds `.pak` files, and writes `ConanSandbox/Mods/modlist.txt` in the same order. Removed downloaded mods are deleted only when `PRUNE_REMOVED_MODS=true`.
+The container downloads each mod, finds `.pak` files, and writes `ConanSandbox/Mods/modlist.txt` in the same order.
 
-`MOD_DOWNLOAD_BACKEND=depotdownloader` is the default. DepotDownloader Workshop download was verified under normal Docker security with item `3720546346`, producing `HEUnlimitedWeight.pak`. A clean compose e2e run generated `ConanSandbox/Mods/modlist.txt` and reached `StartPlay` with that modlist in place.
-
-See `docs/MODS.md`.
+See [docs/MODS.md](docs/MODS.md).
 
 ## Backups
 
-Backups are timestamped `.tar.gz` archives in `BACKUP_LOCATION`, defaulting to `/serverdata/backups`. They include config, saves, mod list files, and the Steam app manifest when present.
+Backups are timestamped `.tar.gz` archives in `BACKUP_LOCATION`, defaulting to `/serverdata/backups`. They include config, saves, mod list files, active mod state, and the Steam app manifest when present.
 
-See `docs/BACKUPS.md` for restore basics.
+See [docs/BACKUPS.md](docs/BACKUPS.md).
 
-## Local Docker Desktop Testing
+## Updating
 
-Start from the repo root:
+`UPDATE_SERVER_ON_START=true` runs the selected backend on startup. If server files are missing, the container downloads them even when the update flag is false.
+
+`AUTO_GAME_UPDATE` and `AUTO_MOD_UPDATE` are planned variables only; no background update loops run in the MVP.
+
+## Logs And Support Commands
 
 ```powershell
-docker compose build
-docker compose up
+docker compose ps
+docker compose logs -f --tail 200 conan
+docker compose restart conan
+docker compose down
 ```
 
-Watch logs for `StartPlay` during launch. The local default-flow smoke test has proven download, config, launch, graceful shutdown, restart persistence, backups, and single-mod modlist handling on this Docker Desktop host.
-
-See `docs/LOCAL_DOCKER_DESKTOP.md`.
-
-## Local Live Client Testing
-
-For a real local game-client login test, use an ignored local env file and the live-test workflow:
+Local live diagnostics:
 
 ```powershell
-docker compose --env-file .env.local-live up -d --build
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-live-status.ps1 -EnvFile .env.local-live
-```
-
-See `docs/LOCAL_LIVE_TEST.md` for the server-browser name, direct-connect options, log checks, stop/restart commands, and what client result to report back. Do not commit `.env.local-live` or real local test passwords.
-
-If a Docker Desktop server reaches `StartPlay` but does not appear in the in-game browser from another LAN client, run:
-
-```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-lan-server-diagnostics.ps1 -EnvFile .env.local-live
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\windows-firewall-conan-rules.ps1 -EnvFile .env.local-live
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live
 ```
-
-See `docs/TROUBLESHOOTING_SERVER_LISTING.md`. The firewall helper is check-only unless run with `-Apply` from an Administrator PowerShell.
 
 ## Troubleshooting
 
-If SteamCMD anonymous login fails with `FAILED (No Connection)`, run the repeatable diagnostics:
+- Local live testing: [docs/LOCAL_LIVE_TEST.md](docs/LOCAL_LIVE_TEST.md)
+- Server listing and LAN connection checks: [docs/TROUBLESHOOTING_SERVER_LISTING.md](docs/TROUBLESHOOTING_SERVER_LISTING.md)
+- SteamCMD and Docker seccomp checks: [docs/TROUBLESHOOTING_STEAMCMD.md](docs/TROUBLESHOOTING_STEAMCMD.md)
+- Local Docker Desktop notes: [docs/LOCAL_DOCKER_DESKTOP.md](docs/LOCAL_DOCKER_DESKTOP.md)
+- Rocky Linux notes: [docs/ROCKY_LINUX.md](docs/ROCKY_LINUX.md)
 
-```powershell
-.\tests\steamcmd-connectivity.ps1
-```
+## Roadmap
 
-For Docker seccomp/security A/B checks:
-
-```powershell
-.\tests\windows-steamcmd-comparison.ps1
-.\tests\steamcmd-security-diagnostics.ps1
-```
-
-To compare against the pinned DepotDownloader backend:
-
-```powershell
-.\tests\depotdownloader-connectivity.ps1
-```
-
-The local Codex host has public internet access but no LAN access. Do not use it for LAN, Rocky Linux, or Unraid connectivity tests.
-
-See `docs/TROUBLESHOOTING_STEAMCMD.md`.
-
-Diagnostic-only SteamCMD seccomp override:
-
-```powershell
-docker compose -f docker-compose.yml -f docker-compose.steamcmd-unconfined.diagnostic.yml up
-```
-
-This is less secure than default Docker isolation and is not recommended for normal use. Prefer the default DepotDownloader backend or upgrade Docker Engine/Desktop to a fixed version if you need SteamCMD.
-
-## Rocky Linux
-
-Rocky Linux testing starts after local Docker Desktop works. Clone or copy the repo to the Rocky Linux host, use the same compose file, and map volumes to normal host paths.
-
-See `docs/ROCKY_LINUX.md`.
-
-## GitHub Repository
-
-Repository: `https://github.com/bryans1981/ConanExilesContainer`
-
-Default visibility is private. GitHub creation, remote setup, commit, and push should be automated when authenticated access exists. Do not make the repository public without explicit approval.
-
-## Known Limitations
-
-- SteamCMD is blocked on Docker Engine `29.4.2` builtin seccomp unless the diagnostic unconfined override is used.
-- Multi-mod ordering, pruning behavior, and long-running public-server behavior still need broader testing beyond the single-mod clean e2e proof.
-- Wine fallback is intentionally absent.
-- Full WebGUI is planned for Phase 2 only.
+- Verify Rocky Linux and Unraid deployments.
+- Verify multi-mod ordering, removal, and pruning with real mods.
+- Observe longer-running public server behavior.
+- Add Phase 2 WebGUI later.
+- Keep Wine absent unless native Linux server files become unusable and the user approves a fallback.

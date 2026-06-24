@@ -1,6 +1,6 @@
 # Troubleshooting Server Listing
 
-Use this guide when the Docker Desktop Conan server reaches `StartPlay` but does not appear in the Conan Exiles in-game server browser from another LAN client.
+Use this guide when the Docker Desktop Conan server reaches `StartPlay` but does not appear in the Conan Exiles in-game server browser from another LAN client, or when direct LAN login/password behavior needs to be rechecked.
 
 Do not treat browser absence as proof that the server is down. Direct LAN connectivity, Steam/query response, and public/server-browser registration can fail independently.
 
@@ -18,14 +18,15 @@ Local Docker Desktop diagnostics on June 24, 2026 verified:
 - No old Windows Dedicated Server Launcher, Conan, or host SteamCMD process candidates were found.
 - No specific Windows Firewall inbound rules existed for the Docker-published Conan ports.
 
-Important unresolved clues:
+Important clues from the original investigation:
 
 - Logs included `Autologin attempt failed, unable to register server!`
 - Logs included `SteamSockets: Disabled due to no Steam OSS running.`
 - Before the config fix, generated `ServerSettings.ini` had the requested local live server name, but the Conan startup report still showed `Name=Conan Exiles Server`.
 - After writing `SERVER_NAME` and `SERVER_PASSWORD` to active `Engine.ini` section `[OnlineSubsystem]`, the startup report showed `Name=WickedServerContianer`.
+- After setting `SERVER_REGION=America`, the startup report showed `Region=1`, and the user confirmed the client displayed the corrected America region.
 
-Do not claim browser listing or live login works until the user confirms it from the other LAN client.
+User-confirmed on June 24, 2026: the LAN client can see the server, log in, use the configured server/admin passwords, and shows America/North America region.
 
 ## Run Diagnostics
 
@@ -98,7 +99,7 @@ Enable:
 
 If direct LAN connect fails, prioritize Windows Firewall, host network profile, Docker Desktop networking, port ownership, and VPN/proxy/security software checks.
 
-If direct LAN connect works but entry is allowed with no password, basic LAN/game-port traffic is working. Check env/config application before focusing on server-browser listing:
+If direct LAN connect works but entry is allowed with no password, or the region/name is wrong, basic LAN/game-port traffic is working. Check env/config application before focusing on server-browser listing:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live

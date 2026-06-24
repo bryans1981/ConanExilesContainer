@@ -28,7 +28,6 @@ Current MVP status: the local Docker Desktop default-flow MVP smoke test passed 
 
 Remaining validation beyond MVP smoke coverage:
 
-- Client-facing region display should be retested after switching `SERVER_REGION` from `0` Europe to `1` North America/America.
 - Multi-mod ordering with more than one real Workshop mod.
 - Removing mod IDs and pruning old downloads.
 - Longer-running public server behavior.
@@ -78,6 +77,7 @@ Remaining validation beyond MVP smoke coverage:
 - Config generation applies `SERVER_NAME`, `SERVER_PASSWORD`, `ADMIN_PASSWORD`, `MAX_PLAYERS`, `SERVER_REGION`, ports, RCON toggle, and `RCON_PASSWORD`.
 - Local live diagnostics verified that `SERVER_NAME` and `SERVER_PASSWORD` must be written to active `Engine.ini` section `[OnlineSubsystem]` for the running Linux server to consume them; the values are also mirrored to `ServerSettings.ini` for compatibility/visibility.
 - Password values are redacted from project startup/config logs.
+- A committed `.env` file exists with safe defaults only. Real local live names/passwords stay in ignored `.env.local*`, `.env.test*`, or secret env files.
 - Ignored local env files such as `.env.local-live` and `.env.test-live` are used for live testing and must not be committed.
 - Empty `WORKSHOP_MOD_IDS` creates an empty active mod list.
 - `MOD_DOWNLOAD_BACKEND=depotdownloader` downloads Workshop item `3720546346` under Docker default security.
@@ -94,6 +94,7 @@ Remaining validation beyond MVP smoke coverage:
 - Diagnostic `seccomp=unconfined` makes Linux SteamCMD login/app-info pass in both the project image and upstream image.
 - The diagnostic compose override `docker-compose.steamcmd-unconfined.diagnostic.yml` renders successfully and is available only as a diagnostic/emergency workaround.
 - User confirmed from another LAN Conan Exiles client that the live Docker server can be seen, direct login works, server name is correct, and passwords work.
+- User confirmed the region display is corrected to America/North America after setting `SERVER_REGION=America`/`serverRegion=1`.
 
 ## Current SteamCMD Blocker
 
@@ -131,7 +132,7 @@ References:
 
 ## Current Local LAN Listing Status
 
-The Docker-hosted live server starts and reaches `StartPlay` on the Windows Docker Desktop host, but browser visibility from another LAN client is not confirmed yet.
+The Docker-hosted live server starts and reaches `StartPlay` on the Windows Docker Desktop host. The user confirmed from another LAN Conan Exiles client that the server can be seen, login works, server name is correct, server/admin passwords work, and the region now shows America/North America.
 
 Verified on June 24, 2026:
 
@@ -144,8 +145,9 @@ Verified on June 24, 2026:
 - No specific Windows Firewall inbound allow rules were found for the Conan Docker-published ports.
 - The server log includes `Autologin attempt failed, unable to register server!` and `SteamSockets: Disabled due to no Steam OSS running.`
 - Before the config fix, generated `ServerSettings.ini` had the requested local live server name, but the Conan startup report still showed `Name=Conan Exiles Server`; after adding `Engine.ini` `[OnlineSubsystem]` name/password writes, the startup report shows `Name=WickedServerContianer`.
+- After the region fix, `SERVER_REGION=America` resolves to `serverRegion=1`; the startup report showed `Region=1`, and the user confirmed the client displays America/North America.
 
-Use `tests/local-lan-server-diagnostics.ps1` and `tests/windows-firewall-conan-rules.ps1` for repeatable checks. Do not claim direct LAN connection or server-browser listing works until the user confirms it from the other LAN client.
+Use `tests/local-lan-server-diagnostics.ps1` and `tests/windows-firewall-conan-rules.ps1` for repeatable checks if LAN/browser behavior regresses.
 
 ## Current Local Live Config Status
 
@@ -162,7 +164,7 @@ Verified on June 24, 2026 after the config fix:
 
 The user later confirmed direct LAN login, correct server name, and password behavior from the Conan Exiles client.
 
-User confirmed after that fix that the client could log in, see the correct server name, and use the configured passwords. Region display then showed EU because `serverRegion=0`; the Windows Dedicated Server Launcher mapping verifies `1` is North America. `SERVER_REGION=1` is now the project default for the local live server.
+User confirmed after that fix that the client could log in, see the correct server name, and use the configured passwords. Region display then showed EU because `serverRegion=0`; the Windows Dedicated Server Launcher mapping verifies `1` is North America. `SERVER_REGION=America` is now the safe committed default and resolves to `serverRegion=1`. The user confirmed the client now shows the corrected America/North America region.
 
 ## Environment Variables
 
@@ -175,11 +177,11 @@ User confirmed after that fix that the client could log in, see the correct serv
 | `SERVER_PASSWORD` | empty | Server join password | Active: `Engine.ini` / `OnlineSubsystem.ServerPassword`; mirrored to `ServerSettings.ini` / `ServerSettings.ServerPassword` |
 | `ADMIN_PASSWORD` | empty | Admin password | `ServerSettings.ini` / `ServerSettings.AdminPassword` |
 | `MAX_PLAYERS` | `40` | Player limit | `ServerSettings.ini` / `ServerSettings.MaxPlayers`; `Game.ini` / `/Script/Engine.GameSession.MaxPlayers` |
-| `SERVER_REGION` | `1` | Browser/list region | `ServerSettings.ini` / `ServerSettings.serverRegion`; `1` is North America/America |
+| `SERVER_REGION` | `America` | Browser/list region | `ServerSettings.ini` / `ServerSettings.serverRegion`; `America`/`NorthAmerica` resolves to `1`, North America/America |
 | `GAME_PORT` | `7777` | Game UDP port | `ServerSettings.ini` / `ServerSettings.Port`; `Engine.ini` / `URL.Port` |
 | `PINGER_PORT` | `7778` | Pinger UDP port | `ServerSettings.ini` / `ServerSettings.PingerPort` |
 | `QUERY_PORT` | `27015` | Steam query UDP port | `ServerSettings.ini` / `ServerSettings.QueryPort`; `Engine.ini` / `OnlineSubsystemSteam.GameServerQueryPort` |
-| `RCON_ENABLED` | `true` | RCON toggle | `ServerSettings.ini` / `ServerSettings.RconEnabled` |
+| `RCON_ENABLED` | `false` | RCON toggle | `ServerSettings.ini` / `ServerSettings.RconEnabled` |
 | `RCON_PORT` | `25575` | RCON TCP port | `ServerSettings.ini` / `ServerSettings.RconPort` |
 | `RCON_PASSWORD` | empty | RCON password | `ServerSettings.ini` / `ServerSettings.RconPassword` |
 | `FORCE_QUERY_PORT_ARG` | `true` | Add explicit `-QueryPort=<QUERY_PORT>` launch arg | Launch command |

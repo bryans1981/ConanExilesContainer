@@ -62,6 +62,40 @@ function Get-ObjectValue {
     return [string]$property.Value
 }
 
+function Convert-ServerRegionValue {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return '1'
+    }
+
+    $normalized = $Value.ToLowerInvariant() -replace '[\s_-]', ''
+    switch ($normalized) {
+        '0' { return '0' }
+        'europe' { return '0' }
+        'eu' { return '0' }
+        '1' { return '1' }
+        'america' { return '1' }
+        'northamerica' { return '1' }
+        'na' { return '1' }
+        'us' { return '1' }
+        'usa' { return '1' }
+        'unitedstates' { return '1' }
+        '2' { return '2' }
+        'asia' { return '2' }
+        '3' { return '3' }
+        'australia' { return '3' }
+        'oceania' { return '3' }
+        '4' { return '4' }
+        'southamerica' { return '4' }
+        'sa' { return '4' }
+        '5' { return '5' }
+        'japan' { return '5' }
+        'jp' { return '5' }
+        default { return $null }
+    }
+}
+
 function Format-EnvValue {
     param([string]$Name, [string]$Value)
     if ($null -eq $Value) {
@@ -220,10 +254,16 @@ try {
         }
 
         $containerServerRegion = Get-MapValue -Map $containerEnv -Name 'SERVER_REGION'
-        if ($containerServerRegion -ne $ExpectedServerRegion) {
+        $containerServerRegionNormalized = Convert-ServerRegionValue $containerServerRegion
+        $expectedServerRegionNormalized = Convert-ServerRegionValue $ExpectedServerRegion
+        if ($null -eq $containerServerRegionNormalized) {
+            Add-Fail 'container-env.SERVER_REGION.expected' "Invalid SERVER_REGION value: $containerServerRegion."
+        } elseif ($null -eq $expectedServerRegionNormalized) {
+            Add-Fail 'container-env.SERVER_REGION.expected' "Invalid expected SERVER_REGION value: $ExpectedServerRegion."
+        } elseif ($containerServerRegionNormalized -ne $expectedServerRegionNormalized) {
             Add-Fail 'container-env.SERVER_REGION.expected' "Expected $ExpectedServerRegion but found $(if ($null -eq $containerServerRegion) { '<missing>' } else { $containerServerRegion })."
         } else {
-            Add-Pass 'container-env.SERVER_REGION.expected' $ExpectedServerRegion
+            Add-Pass 'container-env.SERVER_REGION.expected' "$containerServerRegion -> $containerServerRegionNormalized"
         }
     }
 

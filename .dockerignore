@@ -1,10 +1,16 @@
 .git
 data
 test-results
-.env
 .env.local
+.env.local-*
 .env.local-live
+.env.test
+.env.test-*
 .env.test-live
+.env.secret
+.env.secret-*
+*.local.env
+*.secret.env
 *.log
 *.tar.gz
 tmp

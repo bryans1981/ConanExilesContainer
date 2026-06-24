@@ -8,6 +8,7 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `PROJECT.md`: project goal, scope, MVP definition, repository identity, visibility, environment variables, ports, volumes, and decisions.
 - `PROJECT_MAP.md`: routing/index document for the repository.
 - `SESSION_HANDOFF.md`: continuity notes, latest status, latest push/remote status, tests, blockers, and next steps.
+- `.env`: committed safe defaults for normal compose use. Do not put real passwords, local live names, or machine-specific values here.
 - `Dockerfile`: Ubuntu-based image with SteamCMD, runtime dependencies, scripts, exposed ports, and healthcheck.
 - `docker-compose.yml`: local Docker Desktop compose service with required volume and port mappings.
 - `docker-compose.steamcmd-unconfined.diagnostic.yml`: diagnostic/emergency-only compose override that sets `security_opt: seccomp=unconfined` for SteamCMD troubleshooting. It is less secure than default Docker isolation and is not enabled by default.
@@ -27,7 +28,7 @@ Future sessions should read this file first, then `PROJECT.md`, `AGENTS.md`, and
 - `scripts/entrypoint.sh`: runtime user setup, directory prep, SteamCMD home seeding, safe logging, backup/update/config/mod orchestration, signal handling.
 - `scripts/install-depotdownloader.sh`: build-time installer for pinned DepotDownloader release `DepotDownloader_3.4.0`.
 - `scripts/update-server.sh`: selected backend install/update for AppID `443030`, Linux platform request, timestamped backend logs, DepotDownloader-first `DOWNLOAD_BACKEND=auto` fallback, and native executable verification.
-- `scripts/configure-server.sh`: persistent config/log directory linking and managed-key environment-driven config writes. Server name/password are written to active `Engine.ini` `[OnlineSubsystem]` and mirrored to `ServerSettings.ini`; `SERVER_REGION` writes `ServerSettings.serverRegion`.
+- `scripts/configure-server.sh`: persistent config/log directory linking and managed-key environment-driven config writes. Server name/password are written to active `Engine.ini` `[OnlineSubsystem]` and mirrored to `ServerSettings.ini`; `SERVER_REGION` accepts readable aliases such as `America` and writes numeric `ServerSettings.serverRegion`.
 - `scripts/update-mods.sh`: selected Workshop backend download/update, ordered modlist generation, removed-mod pruning, and DepotDownloader-first `MOD_DOWNLOAD_BACKEND=auto` fallback.
 - `scripts/backup.sh`: timestamped archive creation and retention cleanup.
 - `scripts/start-server.sh`: native launcher/executable discovery, redacted launch-argument logging, explicit query-port argument support, optional multihome launch arguments, and foreground server launch. The verified downloaded launcher is `ConanSandboxServer.sh`; fallback direct executable is `ConanSandbox/Binaries/Linux/ConanSandboxServer-Linux-Shipping`.
@@ -88,13 +89,11 @@ Local Docker Desktop paths:
 - DepotDownloader Workshop download was verified under Docker default security using public item `3720546346`; verified `.pak` file was `HEUnlimitedWeight.pak`.
 - Clean disposable compose e2e using the DepotDownloader defaults downloaded AppID `443030`, generated config, downloaded Workshop item `3720546346`, generated `ConanSandbox/Mods/modlist.txt`, reached `StartPlay`, stopped gracefully, restarted, preserved config/modlist, created backups, and removed large disposable server/cache folders after preserving proof logs.
 - Local live-client testing uses ignored `.env.local-live` or `.env.test-live` files. Do not commit local live passwords or generated `data/`.
-- Live client connection success must be confirmed by the user from the Conan Exiles game client before it is claimed.
-- Server-browser listing and direct LAN connection success must be confirmed by the user from another Conan Exiles client before it is claimed.
+- Future live client, listing, password, and public registration claims must be confirmed by the user from an actual Conan Exiles client before they are recorded as verified.
 - Local Docker Desktop LAN diagnostics on June 24, 2026 verified Docker publishing and in-container listeners for `7777/udp`, `7778/udp`, and `27015/udp`; Windows Firewall had no specific inbound allow rules for those Docker-published ports.
 - The local live launch command includes `-QueryPort=27015` when `FORCE_QUERY_PORT_ARG=true`.
 - `MULTIHOME_IP` and `MULTIHOME_HTTP_IP` exist for diagnostics but should remain empty unless host/IP binding is being explicitly tested.
-- User confirmed direct LAN connect, correct server name, and password behavior from another Conan Exiles client. The env reached the container; the fix writes `SERVER_NAME` and `SERVER_PASSWORD` to active `Engine.ini` `[OnlineSubsystem]`.
-- User reported region showing EU; verified mapping is `0` Europe and `1` North America from Windows Dedicated Server Launcher strings and an old launcher backup. `SERVER_REGION=1` is the local live default.
+- User confirmed direct LAN connect, correct server name, password behavior, admin password behavior, and America/North America region display from another Conan Exiles client. The env reached the container; `SERVER_NAME` and `SERVER_PASSWORD` are written to active `Engine.ini` `[OnlineSubsystem]`, and `SERVER_REGION=America` resolves to `serverRegion=1`.
 - Auto update loops are not active in MVP.
 
 Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Linux, and Unraid still need later verification.
@@ -110,10 +109,7 @@ Multi-mod ordering, mod removal/pruning, long-running server behavior, Rocky Lin
 - `docs/WEBGUI_PHASE_2.md`: future WebGUI design.
 - `docs/TROUBLESHOOTING_STEAMCMD.md`: SteamCMD/Docker Desktop connectivity blocker explanation and diagnostic workflow.
 - `docs/TROUBLESHOOTING_SERVER_LISTING.md`: LAN server-browser listing and direct-connect troubleshooting for Docker Desktop, Conan query/pinger ports, Windows Firewall, startup report clues, and user report-back checklist.
-- `test-results/depotdownloader-connectivity/`: ignored proof logs from DepotDownloader diagnostics, including the successful AppID `443030` download and bounded launch probe from June 23, 2026.
-- `test-results/steamcmd-security-diagnostics/`: ignored proof logs from Docker seccomp/security diagnostics.
-- `test-results/windows-steamcmd-comparison/`: ignored proof logs from host Windows SteamCMD comparison.
-- `test-results/workshop-mod-diagnostics/`: ignored proof logs from Workshop mod download diagnostics.
+- `test-results/`: ignored diagnostic output created on demand by troubleshooting scripts. Disposable local contents can be removed after important proof/status is summarized in `PROJECT.md` and `SESSION_HANDOFF.md`.
 
 ## Git And GitHub Workflow
 

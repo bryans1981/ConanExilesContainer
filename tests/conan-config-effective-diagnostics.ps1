@@ -50,6 +50,40 @@ function Get-MapValue {
     return $Default
 }
 
+function Convert-ServerRegionValue {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return '1'
+    }
+
+    $normalized = $Value.ToLowerInvariant() -replace '[\s_-]', ''
+    switch ($normalized) {
+        '0' { return '0' }
+        'europe' { return '0' }
+        'eu' { return '0' }
+        '1' { return '1' }
+        'america' { return '1' }
+        'northamerica' { return '1' }
+        'na' { return '1' }
+        'us' { return '1' }
+        'usa' { return '1' }
+        'unitedstates' { return '1' }
+        '2' { return '2' }
+        'asia' { return '2' }
+        '3' { return '3' }
+        'australia' { return '3' }
+        'oceania' { return '3' }
+        '4' { return '4' }
+        'southamerica' { return '4' }
+        'sa' { return '4' }
+        '5' { return '5' }
+        'japan' { return '5' }
+        'jp' { return '5' }
+        default { return $null }
+    }
+}
+
 function Read-IniFile {
     param([string]$Path)
 
@@ -132,7 +166,12 @@ try {
 
     $envValues = Read-EnvFile -Path $EnvFile
     $expectedName = Get-MapValue -Map $envValues -Name 'SERVER_NAME' -Default $ExpectedServerName
-    $expectedRegion = Get-MapValue -Map $envValues -Name 'SERVER_REGION' -Default $ExpectedServerRegion
+    $expectedRegionRaw = Get-MapValue -Map $envValues -Name 'SERVER_REGION' -Default $ExpectedServerRegion
+    $expectedRegion = Convert-ServerRegionValue $expectedRegionRaw
+    if ($null -eq $expectedRegion) {
+        Add-Fail 'env.SERVER_REGION' "Invalid value: $expectedRegionRaw."
+        $expectedRegion = $expectedRegionRaw
+    }
     $gamePort = Get-MapValue -Map $envValues -Name 'GAME_PORT' -Default '7777'
     $pingerPort = Get-MapValue -Map $envValues -Name 'PINGER_PORT' -Default '7778'
     $queryPort = Get-MapValue -Map $envValues -Name 'QUERY_PORT' -Default '27015'

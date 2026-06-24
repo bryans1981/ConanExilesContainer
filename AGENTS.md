@@ -11,6 +11,7 @@ Rules for Codex and future agents:
 - Do not overwrite saves or custom config. Generate defaults only when files are missing, and preserve existing files before linking or changing runtime locations.
 - Keep passwords and secrets out of logs.
 - Use ignored local env files for live tests. Do not commit real local test passwords or generated live server data.
+- Keep the committed `.env` limited to safe defaults only. Real server names, passwords, local IPs, and private live-test values belong in ignored `.env.local*`, `.env.test*`, or secret env files.
 - Keep `AGENTS.md`, `PROJECT.md`, `PROJECT_MAP.md`, and `SESSION_HANDOFF.md` updated after meaningful changes.
 - Run local Docker Desktop testing before claiming MVP success.
 - Do not claim server-browser listing, public registration, direct LAN connection, password protection, or live game-client login works until the user confirms the result from an actual Conan Exiles client.

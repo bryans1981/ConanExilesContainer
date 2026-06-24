@@ -132,7 +132,7 @@ DepotDownloader comparison diagnostics:
 ./tests/depotdownloader-connectivity.sh
 ```
 
-Diagnostics write raw logs and a summary under:
+Diagnostics write raw logs and a summary under ignored `test-results/` subdirectories. These files are disposable and can be removed after important results are captured in `SESSION_HANDOFF.md` or issue notes.
 
 ```text
 ./test-results/steamcmd-connectivity/

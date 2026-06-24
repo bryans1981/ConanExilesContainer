@@ -1,6 +1,6 @@
 # Configuration
 
-Edit `.env` from `.env.example`, then restart the container.
+The repository includes a committed `.env` with safe defaults only. Edit `.env` for a simple local setup, or override values through Docker Compose, Docker, Unraid, or host environment variables. Put real live-test passwords and machine-specific values in ignored files such as `.env.local-live`.
 
 Boolean variables accept `true/false`, `yes/no`, and `1/0`.
 
@@ -22,11 +22,11 @@ Passwords are never printed in logs. Logs only report whether each password is s
 | `SERVER_PASSWORD` | empty | Active: `Engine.ini` / `OnlineSubsystem.ServerPassword`; also mirrored to `ServerSettings.ini` / `ServerSettings.ServerPassword` |
 | `ADMIN_PASSWORD` | empty | `ServerSettings.ini` / `ServerSettings.AdminPassword` |
 | `MAX_PLAYERS` | `40` | `ServerSettings.ini` / `ServerSettings.MaxPlayers`; `Game.ini` / `/Script/Engine.GameSession.MaxPlayers` |
-| `SERVER_REGION` | `1` | `ServerSettings.ini` / `ServerSettings.serverRegion`; values: `0` Europe, `1` North America/America, `2` Asia, `3` Australia, `4` South America, `5` Japan |
+| `SERVER_REGION` | `America` | `ServerSettings.ini` / `ServerSettings.serverRegion`; accepts `America`, `NorthAmerica`, or numeric values: `0` Europe, `1` North America/America, `2` Asia, `3` Australia, `4` South America, `5` Japan |
 | `GAME_PORT` | `7777` | `ServerSettings.ini` / `ServerSettings.Port`; `Engine.ini` / `URL.Port` |
 | `PINGER_PORT` | `7778` | `ServerSettings.ini` / `ServerSettings.PingerPort` |
 | `QUERY_PORT` | `27015` | `ServerSettings.ini` / `ServerSettings.QueryPort`; `Engine.ini` / `OnlineSubsystemSteam.GameServerQueryPort` |
-| `RCON_ENABLED` | `true` | `ServerSettings.ini` / `ServerSettings.RconEnabled` |
+| `RCON_ENABLED` | `false` | `ServerSettings.ini` / `ServerSettings.RconEnabled` |
 | `RCON_PORT` | `25575` | `ServerSettings.ini` / `ServerSettings.RconPort` |
 | `RCON_PASSWORD` | empty | `ServerSettings.ini` / `ServerSettings.RconPassword` |
 

@@ -92,6 +92,40 @@ function Test-Truthy {
     return @('true', 'yes', '1') -contains $Value.ToLowerInvariant()
 }
 
+function Convert-ServerRegionValue {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return '1'
+    }
+
+    $normalized = $Value.ToLowerInvariant() -replace '[\s_-]', ''
+    switch ($normalized) {
+        '0' { return '0' }
+        'europe' { return '0' }
+        'eu' { return '0' }
+        '1' { return '1' }
+        'america' { return '1' }
+        'northamerica' { return '1' }
+        'na' { return '1' }
+        'us' { return '1' }
+        'usa' { return '1' }
+        'unitedstates' { return '1' }
+        '2' { return '2' }
+        'asia' { return '2' }
+        '3' { return '3' }
+        'australia' { return '3' }
+        'oceania' { return '3' }
+        '4' { return '4' }
+        'southamerica' { return '4' }
+        'sa' { return '4' }
+        '5' { return '5' }
+        'japan' { return '5' }
+        'jp' { return '5' }
+        default { return $null }
+    }
+}
+
 function Format-Bytes {
     param([long]$Bytes)
     if ($Bytes -ge 1GB) { return '{0:N2} GiB' -f ($Bytes / 1GB) }
@@ -147,7 +181,8 @@ try {
     $rconPort = Get-MapValue $envValues 'RCON_PORT' '25575'
     $rconEnabled = Test-Truthy (Get-MapValue $envValues 'RCON_ENABLED' 'true')
     $serverName = Get-MapValue $envValues 'SERVER_NAME' 'Conan Exiles Server'
-    $serverRegion = Get-MapValue $envValues 'SERVER_REGION' '1'
+    $serverRegionRaw = Get-MapValue $envValues 'SERVER_REGION' 'America'
+    $serverRegion = Convert-ServerRegionValue $serverRegionRaw
     $serverPassword = Get-MapValue $envValues 'SERVER_PASSWORD' ''
     $adminPassword = Get-MapValue $envValues 'ADMIN_PASSWORD' ''
     $composeArgs = @('--env-file', (Resolve-Path -LiteralPath $EnvFile).Path)
@@ -170,10 +205,13 @@ try {
     } else {
         Add-Pass 'env.ADMIN_PASSWORD' '<set>'
     }
-    if ($serverRegion -ne '1') {
-        Add-Fail 'env.SERVER_REGION' "Expected North America/America value 1 but found $serverRegion."
+    if ($null -eq $serverRegion) {
+        Add-Fail 'env.SERVER_REGION' "Invalid value: $serverRegionRaw."
+        $serverRegion = $serverRegionRaw
+    } elseif ($serverRegion -ne '1') {
+        Add-Fail 'env.SERVER_REGION' "Expected North America/America value 1 but found $serverRegionRaw."
     } else {
-        Add-Pass 'env.SERVER_REGION' '1 (North America/America)'
+        Add-Pass 'env.SERVER_REGION' "$serverRegionRaw -> 1 (North America/America)"
     }
 
     $lanAddresses = Get-NetIPConfiguration | Where-Object {

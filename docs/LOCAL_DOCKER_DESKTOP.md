@@ -69,7 +69,8 @@ For live game-client testing on the local Windows host, use `docs/LOCAL_LIVE_TES
 - Single-mod Workshop download and project modlist generation were verified under Docker default security using DepotDownloader item `3720546346`.
 - Single-mod Workshop download and project modlist generation were also verified under diagnostic `seccomp=unconfined` using SteamCMD item `3720546346`.
 - Clean disposable compose e2e with DepotDownloader defaults passed: server download, config generation, test password application without retained-log leaks, Workshop mod download, modlist generation, `StartPlay`, graceful shutdown, restart persistence, and backup creation.
-- Local live-client workflow now uses ignored `.env.local-live` and `tests/local-live-status.ps1`.
+- Local live-client workflow uses the committed safe `.env` as a template for ignored `.env.local-live` and `tests/local-live-status.ps1`.
+- User-confirmed local live-client results: LAN client can see the server, log in, use server/admin passwords, see the correct server name, and see America/North America region.
 - Remaining local checks: multi-mod ordering, mod removal/pruning, and longer-running server behavior.
 
 External metadata checked June 23, 2026:
