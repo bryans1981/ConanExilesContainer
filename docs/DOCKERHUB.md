@@ -1,6 +1,6 @@
 # Docker Hub Publishing
 
-Docker Hub publishing is prepared but not completed in this repository until the image is built, tagged, and pushed from an authenticated Docker Hub session.
+Docker Hub publishing is complete for this repository. The image was built, tagged, pushed, and pull-verified from an authenticated Docker Hub session on June 24, 2026.
 
 Target image:
 
@@ -8,14 +8,31 @@ Target image:
 docker.io/bryans1981/conanexilescontainer
 ```
 
-Planned tags:
+Pushed tags:
 
 ```text
 bryans1981/conanexilescontainer:latest
-bryans1981/conanexilescontainer:<short-git-sha>
+bryans1981/conanexilescontainer:8019941dadff
 ```
 
+Both pushed tags resolved to digest `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f`.
+
 Semantic version tags can be added later after release versioning exists.
+
+## Pull Verification
+
+Pull verification passed:
+
+```powershell
+docker pull bryans1981/conanexilescontainer:latest
+```
+
+Result:
+
+```text
+Digest: sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f
+Status: Image is up to date for bryans1981/conanexilescontainer:latest
+```
 
 ## Preconditions
 
@@ -64,7 +81,7 @@ The script does not print credentials. It prints only the target repository and 
 
 ## Compose After Publish
 
-After the Docker Hub image is published, hosts can use the image directly instead of building locally:
+Hosts can use the image directly instead of building locally:
 
 ```yaml
 services:
@@ -87,4 +104,4 @@ services:
       - ./data/backups:/serverdata/backups
 ```
 
-For Unraid after publish, use the Docker Hub image, map the same ports and volumes, and set environment variables in the Unraid UI.
+Next step: set up Unraid using the Docker Hub image, map the same ports and volumes, and set environment variables in the Unraid UI.

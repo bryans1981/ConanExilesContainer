@@ -6,8 +6,8 @@
 - Remote name: `origin`
 - Remote URL: `https://github.com/bryans1981/ConanExilesContainer.git`
 - GitHub visibility: private
-- Latest confirmed baseline before Docker Hub publish attempt: `52d2bfd Add local durability and Docker Hub workflow`
-- Local and remote baseline check before publish attempt: `git status --short --branch` returned `## main...origin/main`
+- Latest confirmed baseline before Docker Hub publish: `8019941 Publish Docker Hub image`
+- Local and remote baseline check before publish: `git status --short --branch` returned `## main...origin/main`
 - Commit message for this handoff/status update: `Publish Docker Hub image`
 - GitHub automation blockers: none currently. `gh` is unavailable, but authenticated git/Git Credential Manager/API paths have worked for this repository.
 
@@ -38,7 +38,7 @@ Use `docker compose --env-file .env.local-live ...` for continued live-server wo
 - Updated `docs/LOCAL_DOCKER_DESKTOP.md` and `docs/LOCAL_LIVE_TEST.md` with durability workflow notes.
 - Updated `PROJECT.md` and `PROJECT_MAP.md` so the next target order is local durability, Docker Hub publish, Unraid after publish, then Rocky later after ports are open.
 - Did not update `AGENTS.md`; no new permanent agent rule was needed.
-- Did not publish to Docker Hub.
+- Published the Docker Hub image to `docker.io/bryans1981/conanexilescontainer`.
 - Did not delete live server data, saves, config, logs, Steam cache, mods, or backups.
 
 ## Validation Results This Pass
@@ -92,30 +92,32 @@ Safety and cleanup:
 
 ## Docker Hub Status
 
-Docker Hub publishing workflow is prepared for:
+Docker Hub image is available at:
 
 ```text
 docker.io/bryans1981/conanexilescontainer
 ```
 
-Prepared tags:
+Pushed tags:
 
 - `bryans1981/conanexilescontainer:latest`
-- `bryans1981/conanexilescontainer:<short-git-sha>`
+- `bryans1981/conanexilescontainer:8019941dadff`
 
-Publish attempt status on June 24, 2026:
+Publish status on June 24, 2026:
 
-- Blocked before push because Docker Hub authentication was not present.
+- Docker Hub authentication was present in Docker Desktop's credential helper.
 - `git status --short --branch`: clean, `main...origin/main`.
-- `git log --oneline -5`: latest commit was `52d2bfd Add local durability and Docker Hub workflow`.
+- `git log --oneline -5`: latest commit before publish was `8019941 Publish Docker Hub image`.
 - `docker info`: Docker Desktop reachable, client/server `29.4.2`, context `desktop-linux`, builtin seccomp.
-- `docker compose build`: pass.
 - Docker CLI config exists and uses credential store `desktop`.
-- `docker-credential-desktop list`: helper available with one stored credential entry, but no Docker Hub/index.docker.io entry.
-- Because Docker Hub login/auth was missing, `scripts/dockerhub-build-push.ps1 -Push` was not run and no image was pushed.
-- Pull verification was not run because no push occurred.
+- `docker-credential-desktop list`: helper available with Docker Hub/index.docker.io entries.
+- `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\dockerhub-build-push.ps1 -Push`: pass.
+- `latest` digest: `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f`.
+- `8019941dadff` digest: `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f`.
+- Pull verification command: `docker pull bryans1981/conanexilescontainer:latest`.
+- Pull verification result: pass; Docker reported `Status: Image is up to date for bryans1981/conanexilescontainer:latest`.
 
-Required next manual step: run `docker login docker.io` with the intended Docker Hub account, then retry `scripts/dockerhub-build-push.ps1 -Push`. Do not print Docker Hub credentials or tokens.
+Next step: set up Unraid using the Docker Hub image, mapped ports/volumes, and UI environment variable overrides.
 
 ## Important Decisions
 
@@ -127,13 +129,12 @@ Required next manual step: run `docker login docker.io` with the intended Docker
 - Keep the committed `.env` safe and generic.
 - Use ignored local env files for live tests and real passwords.
 - Do not commit generated `data/`, private logs, saves, backups, local live env files, or diagnostic `test-results/`.
-- Docker Hub is next after local durability; Unraid follows Docker Hub publish.
+- Docker Hub publishing is complete; Unraid setup follows.
 - Rocky Linux remains skipped until its ports are open.
 
 ## Next Recommended Steps
 
-1. Log in to Docker Hub with `docker login docker.io` for an account that can push `bryans1981/conanexilescontainer`.
-2. Retry `scripts/dockerhub-build-push.ps1 -Push`.
-3. Verify pull with `docker pull bryans1981/conanexilescontainer:latest`.
-4. After a successful push and pull verification, update `README.md`, `docs/DOCKERHUB.md`, and this handoff with the pushed tags and pull result.
-5. Set up Unraid using the Docker Hub image, mapped ports/volumes, and UI environment variable overrides.
+1. Set up Unraid using `bryans1981/conanexilescontainer:latest`.
+2. Map ports `7777/udp`, `7778/udp`, `27015/udp`, and `25575/tcp` if RCON is enabled.
+3. Map persistent server, Steam/cache, config, logs, and backup paths.
+4. Set environment variables in the Unraid UI without committing secrets.

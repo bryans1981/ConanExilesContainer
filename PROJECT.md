@@ -15,8 +15,8 @@ Create a simple Docker container project for running a Conan Exiles Enhanced ded
 ## Development Target Order
 
 1. Docker Desktop local
-2. Docker Hub image publish
-3. Unraid from the Docker Hub image
+2. Docker Hub image publish, complete
+3. Unraid from the Docker Hub image, next
 4. Rocky Linux Docker host, skipped until its ports are open
 5. Generic Docker deployment
 
@@ -98,8 +98,8 @@ Remaining validation beyond MVP smoke coverage:
 - User confirmed from another LAN Conan Exiles client that the live Docker server can be seen, direct login works, server name is correct, and passwords work.
 - User confirmed the region display is corrected to America/North America after setting `SERVER_REGION=America`/`serverRegion=1`.
 - Automated local durability testing now exists in `tests/local-durability.ps1` for Docker Desktop Windows and `tests/local-durability.sh` for compatible Bash environments.
-- Docker Hub publishing workflow support now exists in `scripts/dockerhub-build-push.ps1` and `docs/DOCKERHUB.md` for `docker.io/bryans1981/conanexilescontainer`.
-- The Docker Hub image has not been pushed or verified as available yet.
+- Docker Hub publishing workflow support exists in `scripts/dockerhub-build-push.ps1` and `docs/DOCKERHUB.md` for `docker.io/bryans1981/conanexilescontainer`.
+- The Docker Hub image is pushed and pull-verified as `bryans1981/conanexilescontainer:latest` and `bryans1981/conanexilescontainer:8019941dadff`.
 
 ## Current SteamCMD Blocker
 
@@ -260,18 +260,20 @@ Verified public test item: `3720546346` (`[Enhanced] Unlimited Weight`).
 
 ## Docker Hub Publishing
 
-Docker Hub is the next deployment target after local durability testing. Target repository:
+Docker Hub publishing is complete. Target repository:
 
 ```text
 docker.io/bryans1981/conanexilescontainer
 ```
 
-Prepared tags:
+Pushed tags:
 
 - `bryans1981/conanexilescontainer:latest`
-- `bryans1981/conanexilescontainer:<short-git-sha>`
+- `bryans1981/conanexilescontainer:8019941dadff`
 
-Use `scripts/dockerhub-build-push.ps1` for dry-run, build/tag, and explicit `-Push` publishing. Do not claim the image exists until a push succeeds and the tag can be pulled. After publish, Unraid should use the Docker Hub image with port/volume mappings and environment variable overrides in the Unraid UI.
+Pull verification passed with `docker pull bryans1981/conanexilescontainer:latest`; Docker reported digest `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f`.
+
+Use `scripts/dockerhub-build-push.ps1` for future dry-run, build/tag, and explicit `-Push` publishing. Unraid should now use the Docker Hub image with port/volume mappings and environment variable overrides in the Unraid UI.
 
 Rocky Linux remains skipped for now because its ports are not open.
 

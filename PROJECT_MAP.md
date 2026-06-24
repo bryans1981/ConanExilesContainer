@@ -98,10 +98,10 @@ Local Docker Desktop paths:
 - `MULTIHOME_IP` and `MULTIHOME_HTTP_IP` exist for diagnostics but should remain empty unless host/IP binding is being explicitly tested.
 - User confirmed direct LAN connect, correct server name, password behavior, admin password behavior, and America/North America region display from another Conan Exiles client. The env reached the container; `SERVER_NAME` and `SERVER_PASSWORD` are written to active `Engine.ini` `[OnlineSubsystem]`, and `SERVER_REGION=America` resolves to `serverRegion=1`.
 - Local durability automation exists through `tests/local-durability.ps1` and optional Bash helper `tests/local-durability.sh`.
-- Docker Hub publishing is prepared for `docker.io/bryans1981/conanexilescontainer`, but no published image is claimed until a push succeeds.
+- Docker Hub image `docker.io/bryans1981/conanexilescontainer` is published and pull-verified.
 - Auto update loops are not active in MVP.
 
-Docker Hub publishing is the next target after local durability. Unraid setup follows Docker Hub publish. Rocky Linux is skipped for now because its ports are not open. Multi-mod ordering, mod removal/pruning, and long-running server behavior still need later verification.
+Unraid setup is the next target after Docker Hub publish. Rocky Linux is skipped for now because its ports are not open. Multi-mod ordering, mod removal/pruning, and long-running server behavior still need later verification.
 
 ## Documentation
 
@@ -110,7 +110,7 @@ Docker Hub publishing is the next target after local durability. Unraid setup fo
 - `docs/BACKUPS.md`: backup and restore basics.
 - `docs/LOCAL_DOCKER_DESKTOP.md`: local test procedure and current status.
 - `docs/LOCAL_LIVE_TEST.md`: local Docker Desktop live-client test workflow, LAN-client connection checklist, diagnostics, and firewall helper commands.
-- `docs/DOCKERHUB.md`: Docker Hub publishing workflow. The image is prepared but not claimed as published until a push succeeds.
+- `docs/DOCKERHUB.md`: Docker Hub publishing workflow and current pushed tags/pull verification result.
 - `docs/ROCKY_LINUX.md`: Rocky Linux deployment/test notes.
 - `docs/WEBGUI_PHASE_2.md`: future WebGUI design.
 - `docs/TROUBLESHOOTING_STEAMCMD.md`: SteamCMD/Docker Desktop connectivity blocker explanation and diagnostic workflow.
@@ -126,6 +126,6 @@ Docker Hub publishing is the next target after local durability. Unraid setup fo
 ## Current Deployment Order
 
 1. Local Docker Desktop durability testing.
-2. Docker Hub image publish to `docker.io/bryans1981/conanexilescontainer`.
-3. Unraid setup using the Docker Hub image and UI variable overrides.
+2. Docker Hub image publish to `docker.io/bryans1981/conanexilescontainer`. Complete.
+3. Unraid setup using the Docker Hub image and UI variable overrides. Next.
 4. Rocky Linux later, after its ports are open and the user asks to resume it.

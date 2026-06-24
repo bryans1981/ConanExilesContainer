@@ -4,7 +4,7 @@ Docker container project for a Conan Exiles dedicated server using native Linux 
 
 ## Overview
 
-This repository builds a local image that downloads, configures, backs up, optionally mods, and starts a Conan Exiles server. Docker Hub publishing workflow support is ready, but the image has not been pushed yet, so the default local compose example still uses `build: .`.
+This repository builds a Docker image that downloads, configures, backs up, optionally mods, and starts a Conan Exiles server. The image is now available on Docker Hub as `bryans1981/conanexilescontainer:latest`; the local compose file still uses `build: .` for development.
 
 DepotDownloader is the default download backend for both server files and Workshop mods. SteamCMD remains available as an explicit troubleshooting or host-specific option.
 
@@ -14,9 +14,9 @@ DepotDownloader is the default download backend for both server files and Worksh
 - Real AppID `443030` Linux server files were downloaded and launched through the native Linux launcher.
 - Local LAN client testing is confirmed for login, server name, server password, admin password, and America/North America region display.
 - Automated local durability testing is available in `tests/local-durability.ps1`.
-- Docker Hub build/tag/push tooling is prepared for `bryans1981/conanexilescontainer`, but no published image is claimed yet.
+- Docker Hub image publishing is complete for `bryans1981/conanexilescontainer:latest` and `bryans1981/conanexilescontainer:8019941dadff`.
 - Docker Engine `29.4.2` builtin seccomp blocks Linux SteamCMD on this host; DepotDownloader avoids that blocker.
-- Rocky Linux, Unraid, long-running public behavior, and multi-mod pruning still need later validation.
+- Unraid setup is the next deployment step; Rocky Linux, long-running public behavior, and multi-mod pruning still need later validation.
 - Wine and the WebGUI are not part of the MVP.
 
 ## Features
@@ -72,15 +72,22 @@ The checked-in compose file already reads `.env` through Compose variable substi
 
 ## Docker Hub Image
 
-Docker Hub publishing is prepared for this target:
+The Docker Hub image is available:
 
 ```text
 bryans1981/conanexilescontainer:latest
+bryans1981/conanexilescontainer:8019941dadff
 ```
 
-Do not switch production or Unraid hosts to the Docker Hub image until it has actually been pushed.
+Pull verification passed on June 24, 2026:
 
-After publish, this compose shape can use the registry image instead of local `build: .`:
+```powershell
+docker pull bryans1981/conanexilescontainer:latest
+```
+
+Docker reported digest `sha256:37d5412fa60c58019b4356776cb57486f25344cc9a45287ab8aac339cf22723f` and `Status: Image is up to date for bryans1981/conanexilescontainer:latest`.
+
+Hosts can use the registry image instead of local `build: .`:
 
 ```yaml
 services:
@@ -103,7 +110,7 @@ services:
       - ./data/backups:/serverdata/backups
 ```
 
-For Unraid after publish, use the Docker Hub image, map the same ports and volumes, and override environment variables in the Unraid UI.
+For Unraid, use the Docker Hub image, map the same ports and volumes, and override environment variables in the Unraid UI.
 
 See [docs/DOCKERHUB.md](docs/DOCKERHUB.md).
 
@@ -239,8 +246,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effecti
 
 ## Roadmap
 
-- Publish the Docker Hub image after login/repository checks and explicit final approval.
-- Use the Docker Hub image for Unraid setup after publish.
+- Set up Unraid using the published Docker Hub image.
 - Keep Rocky Linux skipped until its ports are open and the user asks to resume it.
 - Verify multi-mod ordering, removal, and pruning with real mods.
 - Observe longer-running public server behavior.
