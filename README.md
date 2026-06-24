@@ -224,31 +224,3 @@ docker compose logs -f --tail 200 conan
 docker compose restart conan
 docker compose down
 ```
-
-Local live diagnostics:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-durability.ps1 -EnvFile .env.local-live -Quick -KeepRunning
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-live-status.ps1 -EnvFile .env.local-live
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-lan-server-diagnostics.ps1 -EnvFile .env.local-live
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\local-env-effective-diagnostics.ps1 -EnvFile .env.local-live
-powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\conan-config-effective-diagnostics.ps1 -EnvFile .env.local-live
-```
-
-## Troubleshooting
-
-- Local live testing: [docs/LOCAL_LIVE_TEST.md](docs/LOCAL_LIVE_TEST.md)
-- Server listing and LAN connection checks: [docs/TROUBLESHOOTING_SERVER_LISTING.md](docs/TROUBLESHOOTING_SERVER_LISTING.md)
-- SteamCMD and Docker seccomp checks: [docs/TROUBLESHOOTING_STEAMCMD.md](docs/TROUBLESHOOTING_STEAMCMD.md)
-- Local Docker Desktop notes: [docs/LOCAL_DOCKER_DESKTOP.md](docs/LOCAL_DOCKER_DESKTOP.md)
-- Rocky Linux notes: [docs/ROCKY_LINUX.md](docs/ROCKY_LINUX.md)
-- Docker Hub publishing: [docs/DOCKERHUB.md](docs/DOCKERHUB.md)
-
-## Roadmap
-
-- Set up Unraid using the published Docker Hub image.
-- Keep Rocky Linux skipped until its ports are open and the user asks to resume it.
-- Verify multi-mod ordering, removal, and pruning with real mods.
-- Observe longer-running public server behavior.
-- Add Phase 2 WebGUI later.
-- Keep Wine absent unless native Linux server files become unusable and the user approves a fallback.
